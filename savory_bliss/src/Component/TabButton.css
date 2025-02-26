@@ -1,0 +1,15 @@
+.tab-button {
+    min-width: 100px;
+    padding: 0.5rem !important;
+}
+
+.tab-button.active-tab {
+    color: #D2691E !important;
+    border-bottom: 3px solid #D2691E !important;
+    transition: color 0.3s ease, border-bottom 0.3s ease;
+}
+
+.text-active {
+    color: #D2691E !important;
+    transition: color 0.5s ease;
+}

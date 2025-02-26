@@ -1,0 +1,31 @@
+.navbar {
+  padding-top: 0.5rem !important;
+  padding-bottom: 0.25rem !important;
+}
+
+.user-avatar::after {
+  display: none !important;
+}
+
+.logo-text {
+  color: #D2691E !important;
+  transition: background-color 0.3s ease;
+}
+
+.logo-text:hover {
+  color: #b55b1b !important;
+  /* Slightly darker shade for hover effect */
+}
+
+.normal-button {
+  background-color: #D2691E !important;
+  border-color: #D2691E !important;
+  color: white !important;
+  font-weight: bold !important;
+  transition: background-color 0.3s ease;
+}
+
+.normal-button:hover {
+  background-color: #b55b1b !important;
+  /* Slightly darker shade for hover effect */
+}

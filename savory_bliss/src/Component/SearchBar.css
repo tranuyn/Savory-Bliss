@@ -1,0 +1,25 @@
+.search-bar {
+    max-width: 250px;
+}
+
+.search-bar input:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.search-bar .form-control {
+    height: 36px;
+}
+
+.search-button {
+    height: 36px;
+    background-color: #D2691E !important;
+    border-color: #D2691E !important;
+    color: white !important;
+    transition: background-color 0.3s ease;
+}
+
+.search-button:hover {
+    background-color: #b55b1b !important;
+    /* Slightly darker shade for hover effect */
+}
