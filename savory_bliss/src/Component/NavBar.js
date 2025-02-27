@@ -1,6 +1,6 @@
 import { Navbar, Container, Button, Nav, Dropdown } from "react-bootstrap";
 import { Home, CookingPot, Bookmark, Plus } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import "./NavBar.css";
 import SearchBar from "./SearchBar";
 import TabButton from "./TabButton";
@@ -21,11 +21,7 @@ export default function NavigationBar({ user }) {
 
         {/* Navigation Tabs */}
         <Nav className="d-flex align-items-center gap-3">
-          <TabButton
-            icon={Home}
-            href="/"
-            active={location.pathname === "/"}
-          />
+          <TabButton icon={Home} href="/" active={location.pathname === "/"} />
           {user && (
             <>
               <TabButton
@@ -44,7 +40,10 @@ export default function NavigationBar({ user }) {
 
         {/* User Controls */}
         <Nav className="d-flex align-items-center gap-4">
-          <Button className="normal-button rounded-pill px-3" href = '/add-recipe'>
+          <Button
+            className="normal-button rounded-pill px-3"
+            href="/add-recipe"
+          >
             <Plus className="fs-3 fw-bold cursor-pointer" /> Add a recipe
           </Button>
 
@@ -63,20 +62,24 @@ export default function NavigationBar({ user }) {
                     aspectRatio: "1 / 1",
                     borderRadius: "50%",
                     backgroundColor: "black",
-                    display: "block"
+                    display: "block",
                   }}
                 />
               </Dropdown.Toggle>
               <Dropdown.Menu className="dropdown-menu-custom">
                 <Dropdown.Item href="/profile">User Center</Dropdown.Item>
                 <Dropdown.Divider />
-                <Dropdown.Item onClick={() => console.log("Logging out...")}>Log Out</Dropdown.Item>
+                <Dropdown.Item onClick={() => console.log("Logging out...")}>
+                  Log Out
+                </Dropdown.Item>
               </Dropdown.Menu>
             </Dropdown>
           ) : (
-            <Nav.Link 
-              href="/login" 
-              className="text-secondary text-decoration-underline">
+            <Nav.Link
+              as={Link}
+              to="/login"
+              className="text-secondary text-decoration-underline"
+            >
               LOGIN
             </Nav.Link>
           )}

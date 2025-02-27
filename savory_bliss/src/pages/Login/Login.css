@@ -1,0 +1,25 @@
+.login-form {
+  width: 40%;
+  margin: auto;
+}
+
+.login-form .form-label {
+  font-weight: 500;
+  margin-top: 5px;
+  display: block;
+  text-align: left;
+}
+
+.login-form h1 {
+  color: #D2691E;
+}
+
+.img-fluid {
+  max-width: 40%;
+  height: auto;
+}
+
+u {
+  color: #007bff;
+  cursor: pointer;
+}
