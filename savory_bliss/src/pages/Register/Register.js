@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Form, Button, Container } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import "./Register.css"; 
+import { registerUser } from "../../redux/authSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -14,7 +16,15 @@ const Register = () => {
   
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { error, isFetching, registrationSuccess } = useSelector((state) => state.auths);
 
+  useEffect(() => {
+    // Nếu đăng ký thành công, chuyển đến trang đăng nhập
+    if (registrationSuccess) {
+      navigate('/login');
+    }
+  }, [registrationSuccess, navigate]);
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -22,6 +32,7 @@ const Register = () => {
       [name]: value
     });
   };
+
 
   const validateForm = () => {
     const newErrors = {};
@@ -51,39 +62,25 @@ const Register = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (validateForm()) {
-      console.log("Registering with:", formData);
-      
-      // const registerUser = async () => {
-      //   try {
-      //     const response = await fetch('/auth/register', {
-      //       method: 'POST',
-      //       headers: {
-      //         'Content-Type': 'application/json',
-      //       },
-      //       body: JSON.stringify({
-      //         username: formData.username,
-      //         email: formData.email,
-      //         password: formData.password,
-      //         name: formData.name || formData.username
-      //       }),
-      //     });
-      //     const data = await response.json();
-      //     if (response.ok) {
-      //       navigate('/login');
-      //     } else {
-      //       setErrors({ form: data.message });
-      //     }
-      //   } catch (error) {
-      //     setErrors({ form: 'Lỗi kết nối server' });
-      //   }
-      // };
-      // registerUser();
+      try {
+        const userData = {
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+          name: formData.name || formData.username
+        };
+        
+        await dispatch(registerUser(userData));
+      } catch (err) {
+        console.error("Lỗi đăng ký:", err);
+      }
     }
   };
+
 
   return (
     <Container className="mt-2">

@@ -1,12 +1,26 @@
 import { Navbar, Container, Button, Nav, Dropdown } from "react-bootstrap";
 import { Home, CookingPot, Bookmark, Plus } from "lucide-react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useNavigate } from "react-router-dom";
 import "./NavBar.css";
 import SearchBar from "./SearchBar";
 import TabButton from "./TabButton";
+import { useDispatch } from "react-redux";
+import { logoutUser } from "../redux/authSlice";
 
 export default function NavigationBar({ user }) {
   const location = useLocation(); // Get current route
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      console.log("Đang đăng xuất...");
+      await dispatch(logoutUser());
+      navigate("/");
+    } catch (error) {
+      console.error("Lỗi khi đăng xuất:", error);
+    }
+  };
 
   return (
     <Navbar bg="white" expand="lg" className="navbar shadow-sm px-3">
@@ -69,7 +83,7 @@ export default function NavigationBar({ user }) {
               <Dropdown.Menu className="dropdown-menu-custom">
                 <Dropdown.Item href="/profile">User Center</Dropdown.Item>
                 <Dropdown.Divider />
-                <Dropdown.Item onClick={() => console.log("Logging out...")}>
+                <Dropdown.Item onClick={handleLogout}>
                   Log Out
                 </Dropdown.Item>
               </Dropdown.Menu>
