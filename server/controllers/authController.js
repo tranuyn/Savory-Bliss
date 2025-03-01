@@ -179,6 +179,13 @@ const refreshToken = async (req, res) => {
   }
 };
 
+// Logout
+const logout = async (req, res) => {
+  // Clear the refresh token cookie
+  res.clearCookie("refreshToken");
+  return res.status(200).json({ message: "Đăng xuất thành công" });
+};
+
 // Reset password
 const resetPassword = async (req, res) => {
   const userId = req.params.id;
@@ -228,13 +235,6 @@ const resetPassword = async (req, res) => {
   }
 };
 
-// Logout
-const logout = async (req, res) => {
-  // Clear the refresh token cookie
-  res.clearCookie("refreshToken");
-  return res.status(200).json({ message: "Đăng xuất thành công" });
-};
-
 // Forgot password
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
@@ -263,7 +263,7 @@ const forgotPassword = async (req, res) => {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER || "your-email@gmail.com",
+        user: process.env.EMAIL_USER || "coffeeshopxh@gmail.com",
         pass: process.env.EMAIL_PASS || "your-app-password"
       }
     });

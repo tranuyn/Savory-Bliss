@@ -71,11 +71,19 @@ const Login = () => {
               required
             />
           </Form.Group>
+          <div className="mt-3 forgotPassword">
+            <u
+              onClick={() => navigate("/forgotPassword")}
+              style={{ cursor: "pointer" }}
+            >
+              Quên mật khẩu?
+            </u>
+          </div>
 
           <Button
             variant="primary"
             type="submit"
-            className="w-100 mt-3"
+            className="w-100 mt-2"
             disabled={isFetching}
           >
             {isFetching ? "Đang đăng nhập..." : "Login"}

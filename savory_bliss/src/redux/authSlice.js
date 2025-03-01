@@ -28,7 +28,7 @@ export const registerUser = createAsyncThunk(
   }
 );
 
-// Thunk để đăng nhập
+// Thunk đăng nhập
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async (credentials, { rejectWithValue }) => {
@@ -96,6 +96,63 @@ export const logoutUser = createAsyncThunk(
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
       console.log("Đã xóa thông tin người dùng và token");
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const forgotPassword = createAsyncThunk(
+  "auth/forgotPassword",
+  async (email, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/auth/forgotPassword",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Không thể gửi email đặt lại mật khẩu");
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Thunk reset mật khẩu
+export const resetPassword = createAsyncThunk(
+  "auth/resetPassword",
+  async ({ userId, currentPassword, newPassword }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/auth/resetPassword/${userId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ currentPassword, newPassword }),
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Không thể đổi mật khẩu");
+      }
+
+      const data = await response.json();
+      return data;
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -173,6 +230,34 @@ export const authSlice = createSlice({
       // Xử lý refreshAccessToken
       .addCase(refreshAccessToken.fulfilled, (state, action) => {
         state.token = action.payload;
+      })
+      // Xử lý forgotPassword
+      .addCase(forgotPassword.pending, (state) => {
+        state.isFetching = true;
+        state.error = null;
+      })
+      .addCase(forgotPassword.fulfilled, (state) => {
+        state.isFetching = false;
+        state.error = null;
+      })
+      .addCase(forgotPassword.rejected, (state, action) => {
+        state.isFetching = false;
+        state.error = action.payload;
+      })
+
+      // Xử lý resetPassword
+      .addCase(resetPassword.pending, (state) => {
+        state.isFetching = true;
+        state.error = null;
+      })
+      .addCase(resetPassword.fulfilled, (state, action) => {
+        state.isFetching = false;
+        state.error = null;
+        state.user = action.payload.user;
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.isFetching = false;
+        state.error = action.payload;
       });
   },
 });
