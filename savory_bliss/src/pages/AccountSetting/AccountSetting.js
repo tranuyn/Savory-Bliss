@@ -67,6 +67,10 @@ const ProfileForm = () => {
         text: 'Cập nhật thông tin thành công!'
       });
 
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+
     } catch (error) {
       setMessage({
         type: 'error',

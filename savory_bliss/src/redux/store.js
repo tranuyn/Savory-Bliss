@@ -13,18 +13,20 @@ import {
 } from "redux-persist";
 import authReducer from "./authSlice";
 import recipeSlice from "./recipeSlice";
+import recipeReducer from "./recipeSlice";
 
 // Kết hợp tất cả reducers
 const rootReducer = combineReducers({
   auths: authReducer,
   recipes: recipeSlice,
+  recipes: recipeReducer,
 });
 
 // Cấu hình persist
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["auths"],
+  whitelist: ["auths"], // Chỉ lưu trữ trạng thái xác thực, không lưu recipes
 };
 
 // Tạo persisted reducer
@@ -37,6 +39,9 @@ export const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+        // Cho phép FormData trong các action
+        ignoredActionPaths: ['meta.arg', 'payload'],
+        ignoredPaths: ['recipes.currentRecipe.image', 'recipes.currentRecipe.sections'],
       },
     }),
 });

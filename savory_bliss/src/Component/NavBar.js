@@ -56,7 +56,7 @@ export default function NavigationBar({ user }) {
         <Nav className="d-flex align-items-center gap-4">
           <Button
             className="normal-button rounded-pill px-3"
-            href="/add-recipe"
+            href="/addrecipe"
           >
             <Plus className="fs-3 fw-bold cursor-pointer" /> Add a recipe
           </Button>
