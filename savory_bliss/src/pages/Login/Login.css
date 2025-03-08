@@ -11,12 +11,16 @@
 }
 
 .login-form h1 {
-  color: #D2691E;
+  color: #d2691e;
 }
 
 .img-fluid {
   max-width: 40%;
   height: auto;
+}
+
+.forgotPassword {
+  text-align: right;
 }
 
 u {

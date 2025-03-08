@@ -1,6 +1,45 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 const API_URL = 'http://localhost:5000/api/recipes';
 
+// Search Recipes Thunk
+export const searchRecipes = createAsyncThunk(
+  'recipes/search',
+  async ({ searchQuery, tags, page = 1, limit = 10 }, { rejectWithValue }) => {
+    try {
+      const queryParams = new URLSearchParams();
+      if (searchQuery?.trim()) {
+        queryParams.append('query', searchQuery.trim());
+      }
+      if (tags && tags.length) {
+        queryParams.append('tags', tags.join(','));
+      }
+      queryParams.append('page', Math.max(1, Number(page)));
+      queryParams.append('limit', Math.max(1, Math.min(50, Number(limit))));
+
+      const response = await fetch(
+        `http://localhost:5000/api/recipes/search?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return rejectWithValue(data.message || 'Không thể tìm kiếm công thức');
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Đã xảy ra lỗi khi tìm kiếm');
+    }
+  }
+);
+
 // Thunk để lấy tất cả công thức
 export const fetchRecipes = createAsyncThunk(
   'recipes/fetchRecipes',
@@ -201,16 +240,46 @@ const recipeSlice = createSlice({
     isUpdating: false,
     isDeleting: false,
     success: false,
-    error: null
+    error: null,
+    pagination: {
+      total: 0,
+      page: 1,
+      pages: 1
+    }
   },
   reducers: {
     resetRecipeState: (state) => {
       state.success = false;
       state.error = null;
+    },
+    clearSearchResults: (state) => {
+      state.recipes = [];
+      state.pagination = {
+        total: 0,
+        page: 1,
+        pages: 1
+      };
     }
   },
   extraReducers: (builder) => {
     builder
+      // Search recipes cases
+      .addCase(searchRecipes.pending, (state) => {
+        state.isFetching = true;
+        state.error = null;
+      })
+      .addCase(searchRecipes.fulfilled, (state, action) => {
+        state.isFetching = false;
+        state.recipes = action.payload.data;
+        state.pagination = action.payload.pagination;
+        state.error = null;
+      })
+      .addCase(searchRecipes.rejected, (state, action) => {
+        state.isFetching = false;
+        state.error = action.payload;
+        state.recipes = [];
+      })
+
       // Xử lý fetchRecipes
       .addCase(fetchRecipes.pending, (state) => {
         state.isFetching = true;
@@ -317,6 +386,6 @@ const recipeSlice = createSlice({
   }
 });
 
-export const { resetRecipeState } = recipeSlice.actions;
-
+export const { resetRecipeState, clearSearchResults } = recipeSlice.actions;
 export default recipeSlice.reducer;
+
