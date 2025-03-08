@@ -55,12 +55,12 @@ const ProfileForm = () => {
         Ava: selectedImage ? previewUrl : user?.Ava
       };
 
-      const resultAction = await dispatch(
-        updateProfile({
-          userId: user.id,
-          profileData: profileData
-        })
-      ).unwrap();
+      // const resultAction = await dispatch(
+      //   updateProfile({
+      //     userId: user.id,
+      //     profileData: profileData
+      //   })
+      // ).unwrap();
 
       setMessage({
         type: 'success',
