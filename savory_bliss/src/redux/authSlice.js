@@ -159,6 +159,35 @@ export const resetPassword = createAsyncThunk(
   }
 );
 
+// Thunk cập nhật thông tin người dùng
+export const updateProfile = createAsyncThunk(
+  "auth/updateProfile",
+  async ({userId, profileData }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/auth/updateProfile/${userId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(profileData),
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Could not update profile");
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 // Slice auth
 export const authSlice = createSlice({
   name: "auth",
@@ -256,6 +285,21 @@ export const authSlice = createSlice({
         state.user = action.payload.user;
       })
       .addCase(resetPassword.rejected, (state, action) => {
+        state.isFetching = false;
+        state.error = action.payload;
+      })
+
+      // Xử lý updateProfile
+      .addCase(updateProfile.pending, (state) => {
+        state.isFetching = true;
+        state.error = null;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.isFetching = false;
+        state.error = null;
+        state.user = action.payload.user;
+      })
+      .addCase(updateProfile.rejected, (state, action) => {
         state.isFetching = false;
         state.error = action.payload;
       });

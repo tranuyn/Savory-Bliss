@@ -30,7 +30,7 @@ export default function NavigationBar({ user }) {
           <Navbar.Brand href="/" className="logo-text fw-bold fs-4">
             Savory Bliss
           </Navbar.Brand>
-          <SearchBar />
+          <SearchBar href="/SearchResult"/>
         </Nav>
 
         {/* Navigation Tabs */}
@@ -81,7 +81,7 @@ export default function NavigationBar({ user }) {
                 />
               </Dropdown.Toggle>
               <Dropdown.Menu className="dropdown-menu-custom">
-                <Dropdown.Item href="/profile">User Center</Dropdown.Item>
+                <Dropdown.Item href="/AccountSetting">User Center</Dropdown.Item>
                 <Dropdown.Divider />
                 <Dropdown.Item onClick={handleLogout}>
                   Log Out

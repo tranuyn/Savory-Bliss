@@ -12,10 +12,12 @@ import {
   REGISTER,
 } from "redux-persist";
 import authReducer from "./authSlice";
+import recipeSlice from "./recipeSlice";
 
 // Kết hợp tất cả reducers
 const rootReducer = combineReducers({
   auths: authReducer,
+  recipes: recipeSlice,
 });
 
 // Cấu hình persist
