@@ -1,6 +1,4 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-
-// API Base URL
 const API_URL = 'http://localhost:5000/api/recipes';
 
 // Thunk để lấy tất cả công thức
@@ -8,7 +6,7 @@ export const fetchRecipes = createAsyncThunk(
   'recipes/fetchRecipes',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch(API_URL);
+      const response = await fetch(`${API_URL}/recipes`);
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -23,16 +21,36 @@ export const fetchRecipes = createAsyncThunk(
   }
 );
 
-// Thunk để lấy chi tiết công thức theo ID
+// Thunk để lấy công thức theo ID
 export const fetchRecipeById = createAsyncThunk(
   'recipes/fetchRecipeById',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_URL}/${id}`);
+      const response = await fetch(`${API_URL}/recipes/${id}`);
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Không thể lấy chi tiết công thức');
+        throw new Error(errorData.message || 'Không thể lấy thông tin công thức');
+      }
+      
+      const data = await response.json();
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Thunk để lấy công thức của người dùng
+export const fetchUserRecipes = createAsyncThunk(
+  'recipes/fetchUserRecipes',
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${API_URL}/user/${userId}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Không thể lấy danh sách công thức của người dùng');
       }
       
       const data = await response.json();
@@ -48,48 +66,34 @@ export const addRecipe = createAsyncThunk(
   'recipes/addRecipe',
   async (recipeData, { rejectWithValue, getState }) => {
     try {
-      const { token } = getState().auths;
-      
-      if (!token) {
-        throw new Error('Bạn cần đăng nhập để thêm công thức');
-      }
+      const { auths } = getState();
+      const token = auths.token;
       
       const formData = new FormData();
       
-      // Thêm các trường cơ bản
+      // Thêm các trường dữ liệu vào FormData
       formData.append('title', recipeData.title);
-      formData.append('description', recipeData.description || '');
-      formData.append('tags', recipeData.tags || '');
-      formData.append('ingredients', recipeData.ingredients || '');
+      formData.append('description', recipeData.description);
+      formData.append('tags', JSON.stringify(recipeData.tags));
+      formData.append('ingredients', JSON.stringify(recipeData.ingredients));
+      formData.append('sections', JSON.stringify(recipeData.sections));
       
       // Thêm hình ảnh chính
       if (recipeData.image) {
         formData.append('image', recipeData.image);
       }
       
-      // Xử lý sections
-      if (recipeData.sections && recipeData.sections.length > 0) {
-        const sectionsForBackend = recipeData.sections.map(section => ({
-          id: section.id,
-          title: section.title || '',
-          content: section.content || '',
-        }));
-        
-        formData.append('sections', JSON.stringify(sectionsForBackend));
-        
-        // Thêm hình ảnh cho các section
-        recipeData.sections.forEach(section => {
-          if (section.image) {
-            // Đặt tên file để backend có thể nhận diện section
-            formData.append('sectionImages', section.image, `section-${section.id}`);
-          }
+      // Thêm hình ảnh cho các phần
+      if (recipeData.sectionImages && recipeData.sectionImages.length > 0) {
+        recipeData.sectionImages.forEach((image, index) => {
+          formData.append('sectionImages', image);
         });
       }
       
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${API_URL}/recipes`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`
+          'Authorization': `Bearer ${token}`
         },
         body: formData
       });
@@ -112,47 +116,37 @@ export const updateRecipe = createAsyncThunk(
   'recipes/updateRecipe',
   async ({ id, recipeData }, { rejectWithValue, getState }) => {
     try {
-      const { token } = getState().auths;
-      
-      if (!token) {
-        throw new Error('Bạn cần đăng nhập để cập nhật công thức');
-      }
+      const { auths } = getState();
+      const token = auths.token;
       
       const formData = new FormData();
       
-      // Thêm các trường cơ bản
+      // Thêm các trường dữ liệu vào FormData
       formData.append('title', recipeData.title);
-      formData.append('description', recipeData.description || '');
-      formData.append('tags', recipeData.tags || '');
-      formData.append('ingredients', recipeData.ingredients || '');
+      formData.append('description', recipeData.description);
+      formData.append('tags', JSON.stringify(recipeData.tags));
+      formData.append('ingredients', JSON.stringify(recipeData.ingredients));
+      formData.append('sections', JSON.stringify(recipeData.sections));
       
       // Thêm hình ảnh chính nếu có
       if (recipeData.image && recipeData.image instanceof File) {
         formData.append('image', recipeData.image);
       }
       
-      // Xử lý sections
-      if (recipeData.sections && recipeData.sections.length > 0) {
-        const sectionsForBackend = recipeData.sections.map(section => ({
-          id: section.id,
-          title: section.title || '',
-          content: section.content || '',
-        }));
-        
-        formData.append('sections', JSON.stringify(sectionsForBackend));
-        
-        // Thêm hình ảnh cho các section
-        recipeData.sections.forEach(section => {
-          if (section.image && section.image instanceof File) {
-            formData.append('sectionImages', section.image, `section-${section.id}`);
+      // Thêm hình ảnh cho các phần
+      if (recipeData.sectionImages && recipeData.sectionImages.length > 0) {
+        recipeData.sectionImages.forEach((image, index) => {
+          if (image instanceof File) {
+            formData.append('sectionImages', image);
+            formData.append('sectionImageIndices', index);
           }
         });
       }
       
-      const response = await fetch(`${API_URL}/${id}`, {
+      const response = await fetch(`${API_URL}/recipes/${id}`, {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${token}`
+          'Authorization': `Bearer ${token}`
         },
         body: formData
       });
@@ -175,17 +169,13 @@ export const deleteRecipe = createAsyncThunk(
   'recipes/deleteRecipe',
   async (id, { rejectWithValue, getState }) => {
     try {
-      const { token } = getState().auths;
+      const { auths } = getState();
+      const token = auths.token;
       
-      if (!token) {
-        throw new Error('Bạn cần đăng nhập để xóa công thức');
-      }
-      
-      const response = await fetch(`${API_URL}/${id}`, {
+      const response = await fetch(`${API_URL}/recipes/${id}`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          'Authorization': `Bearer ${token}`
         }
       });
       
@@ -207,8 +197,11 @@ const recipeSlice = createSlice({
     recipes: [],
     currentRecipe: null,
     isFetching: false,
-    error: null,
-    success: false
+    isAdding: false,
+    isUpdating: false,
+    isDeleting: false,
+    success: false,
+    error: null
   },
   reducers: {
     resetRecipeState: (state) => {
@@ -236,6 +229,7 @@ const recipeSlice = createSlice({
       // Xử lý fetchRecipeById
       .addCase(fetchRecipeById.pending, (state) => {
         state.isFetching = true;
+        state.currentRecipe = null;
         state.error = null;
       })
       .addCase(fetchRecipeById.fulfilled, (state, action) => {
@@ -248,62 +242,81 @@ const recipeSlice = createSlice({
         state.error = action.payload;
       })
       
+      // Xử lý fetchUserRecipes
+      .addCase(fetchUserRecipes.pending, (state) => {
+        state.isFetching = true;
+        state.error = null;
+      })
+      .addCase(fetchUserRecipes.fulfilled, (state, action) => {
+        state.isFetching = false;
+        state.recipes = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchUserRecipes.rejected, (state, action) => {
+        state.isFetching = false;
+        state.error = action.payload;
+      })
+      
       // Xử lý addRecipe
       .addCase(addRecipe.pending, (state) => {
-        state.isFetching = true;
+        state.isAdding = true;
         state.success = false;
         state.error = null;
       })
       .addCase(addRecipe.fulfilled, (state, action) => {
-        state.isFetching = false;
-        state.recipes.unshift(action.payload);
+        state.isAdding = false;
+        state.recipes.push(action.payload);
         state.success = true;
         state.error = null;
       })
       .addCase(addRecipe.rejected, (state, action) => {
-        state.isFetching = false;
-        state.error = action.payload;
+        state.isAdding = false;
         state.success = false;
+        state.error = action.payload;
       })
       
       // Xử lý updateRecipe
       .addCase(updateRecipe.pending, (state) => {
-        state.isFetching = true;
+        state.isUpdating = true;
         state.success = false;
         state.error = null;
       })
       .addCase(updateRecipe.fulfilled, (state, action) => {
-        state.isFetching = false;
-        state.recipes = state.recipes.map(recipe => 
-          recipe._id === action.payload._id ? action.payload : recipe
-        );
+        state.isUpdating = false;
+        const index = state.recipes.findIndex(recipe => recipe.id === action.payload.id);
+        if (index !== -1) {
+          state.recipes[index] = action.payload;
+        }
         state.currentRecipe = action.payload;
         state.success = true;
         state.error = null;
       })
       .addCase(updateRecipe.rejected, (state, action) => {
-        state.isFetching = false;
-        state.error = action.payload;
+        state.isUpdating = false;
         state.success = false;
+        state.error = action.payload;
       })
       
       // Xử lý deleteRecipe
       .addCase(deleteRecipe.pending, (state) => {
-        state.isFetching = true;
+        state.isDeleting = true;
+        state.success = false;
         state.error = null;
       })
       .addCase(deleteRecipe.fulfilled, (state, action) => {
-        state.isFetching = false;
-        state.recipes = state.recipes.filter(recipe => recipe._id !== action.payload);
+        state.isDeleting = false;
+        state.recipes = state.recipes.filter(recipe => recipe.id !== action.payload);
         state.success = true;
         state.error = null;
       })
       .addCase(deleteRecipe.rejected, (state, action) => {
-        state.isFetching = false;
+        state.isDeleting = false;
+        state.success = false;
         state.error = action.payload;
       });
   }
 });
 
 export const { resetRecipeState } = recipeSlice.actions;
+
 export default recipeSlice.reducer;

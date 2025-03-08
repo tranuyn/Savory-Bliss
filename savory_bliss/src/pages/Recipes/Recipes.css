@@ -1,0 +1,253 @@
+.recipes-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    background-color: #fff;
+    font-family: Arial, sans-serif;
+  }
+  
+  /* User Profile Section */
+  .user-profile-section {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    padding: 20px;
+  }
+  
+  .profile-content {
+    display: flex;
+    position: relative;
+  }
+  
+  .profile-avatar {
+    width: 100px;
+    height: 100px;
+    margin-right: 20px;
+  }
+  
+  .profile-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: #f0e6ff;
+    object-fit: cover;
+  }
+  
+  .profile-info {
+    flex: 1;
+  }
+  
+  .profile-name {
+    font-size: 18px;
+    color: #ff7b00;
+    margin: 0 0 5px 0;
+  }
+  
+  .profile-title {
+    font-size: 14px;
+    color: #666;
+    margin: 0 0 10px 0;
+  }
+  
+  .profile-description {
+    font-size: 14px;
+    color: #888;
+    margin: 0 0 10px 0;
+    line-height: 1.4;
+  }
+  
+  .profile-website {
+    font-size: 14px;
+    color: #00a0ff;
+    text-decoration: none;
+    display: block;
+    margin-bottom: 10px;
+  }
+  
+  .profile-stats {
+    display: flex;
+    gap: 15px;
+  }
+  
+  .stats-item {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .edit-profile-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #666;
+  }
+  
+  /* Recipes Actions */
+  .recipes-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    align-items: center;
+  }
+  
+  .add-recipe-btn {
+    background-color: #ff7b00;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+  }
+  
+  .add-icon {
+    font-size: 16px;
+  }
+  
+  .search-box {
+    display: flex;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    overflow: hidden;
+    width: 200px;
+  }
+  
+  .search-input {
+    border: none;
+    outline: none;
+    padding: 8px 12px;
+    font-size: 14px;
+    flex: 1;
+  }
+  
+  .search-btn {
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  
+  /* Recipes Title */
+  .recipes-title {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 15px;
+  }
+  
+  /* Recipes Grid */
+  .recipes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  
+  .recipe-card {
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+  
+  .recipe-link {
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  .recipe-image {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+  }
+  
+  .recipe-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .recipe-info {
+    padding: 15px;
+  }
+  
+  .recipe-title {
+    font-size: 16px;
+    color: #333;
+    margin: 0 0 5px 0;
+  }
+  
+  .recipe-date {
+    font-size: 12px;
+    color: #999;
+    margin: 0 0 10px 0;
+  }
+  
+  .recipe-description {
+    font-size: 14px;
+    color: #666;
+    margin: 0 0 10px 0;
+    line-height: 1.4;
+  }
+  
+  .recipe-author {
+    font-size: 14px;
+    color: #ff7b00;
+  }
+  
+  .recipe-actions {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 15px;
+    border-top: 1px solid #f0f0f0;
+  }
+  
+  .save-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #666;
+  }
+  
+  .stats {
+    display: flex;
+    gap: 15px;
+  }
+  
+  .likes, .views {
+    font-size: 14px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .heart-icon {
+    font-size: 16px;
+  }
+  
+  .view-icon {
+    font-size: 16px;
+  }
+  
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .recipes-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .recipes-actions {
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .add-recipe-btn, .search-box {
+      width: 100%;
+    }
+  }

@@ -5,7 +5,8 @@ const {
   getAllRecipes, 
   getRecipeById, 
   updateRecipe, 
-  deleteRecipe 
+  deleteRecipe,
+  getRecipesByUser  // Thêm hàm này
 } = require("../controllers/recipeController");
 const { protect } = require("../middlewares/authMiddleware");
 
@@ -15,5 +16,6 @@ router.get("/", getAllRecipes); // Không cần xác thực để xem danh sách
 router.get("/:id", getRecipeById); // Không cần xác thực để xem chi tiết
 router.put("/:id", protect, updateRecipe);
 router.delete("/:id", protect, deleteRecipe);
+router.get("/user/:userId", getRecipesByUser); // Thêm route cho lấy recipe theo user ID
 
 module.exports = router;

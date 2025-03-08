@@ -8,6 +8,7 @@ import Register from "./pages/Register/Register";
 import { useDispatch, useSelector } from "react-redux";
 import Home from "./pages/Home/Home";
 import AddRecipe from "./pages/AddRecipe/AddRecipe";
+import Recipes from "./pages/Recipes/Recipes";
 import ProtectedRoute from "./Component/ProtectedRoute";
 import { initAuth } from "./redux/authSlice";
 
@@ -30,6 +31,11 @@ function App() {
           <Route path="/addrecipe" element={
             <ProtectedRoute>
               <AddRecipe />
+            </ProtectedRoute>
+          } />
+          <Route path="/recipes" element={
+            <ProtectedRoute>
+              <Recipes />
             </ProtectedRoute>
           } />
           <Route path="/" element={<Home />} />

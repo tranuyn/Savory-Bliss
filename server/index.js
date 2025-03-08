@@ -24,7 +24,6 @@ app.use(morgan("dev"));
 app.use(express.json());
 
 // Thiết lập đường dẫn tĩnh
-// Phục vụ thư mục uploads cho hình ảnh công thức
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Phục vụ thư mục public cho các tài nguyên tĩnh khác
 app.use(express.static("public"));
