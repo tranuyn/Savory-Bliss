@@ -1,0 +1,358 @@
+.add-recipe-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    background-color: #fff;
+    font-family: Arial, sans-serif;
+  }
+  
+  .recipe-form {
+    width: 100%;
+    padding: 20px;
+  }
+  
+  /* Image upload section */
+  .image-upload-section {
+    width: 100%;
+    height: 180px;
+    background-color: #000;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .image-upload-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+  
+  .image-preview {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+  }
+  
+  .upload-icon,
+  .upload-icon-btn {
+    color: #00a0ff;
+    font-size: 24px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .upload-icon-btn {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .hidden-input {
+    display: none;
+  }
+  
+  /* Form section */
+  .form-section {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  /* Title input */
+  .title-group {
+    position: relative;
+    margin-bottom: 15px;
+  }
+  
+  .title-input {
+    width: 100%;
+    padding: 12px 15px;
+    border: none;
+    font-size: 18px;
+    color: #666;
+    font-weight: 400;
+    outline: none;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .required-mark {
+    color: #ff7b00;
+    position: absolute;
+    top: 12px;
+    right: 15px;
+  }
+  
+  /* Description and tags inputs */
+  .description-input,
+  .tags-input {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    border: none;
+    outline: none;
+    color: #666;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  /* Ingredients section */
+  .ingredients-section {
+    margin-bottom: 20px;
+  }
+  
+  .section-label {
+    display: block;
+    color: #ff7b00;
+    font-size: 16px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    text-align: left;
+  }
+  
+  .ingredients-input {
+    width: 100%;
+    padding: 12px 15px;
+    border: none;
+    outline: none;
+    color: #666;
+    min-height: 100px;
+    resize: vertical;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  /* Recipe section */
+  .recipe-section-container {
+    margin-bottom: 20px;
+  }
+  
+  .recipe-section {
+    background-color: #fff;
+    margin-bottom: 15px;
+    cursor: grab;
+    transition: box-shadow 0.2s ease, transform 0.1s ease;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .recipe-section:hover {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+  }
+  
+  .recipe-section.dragging {
+    opacity: 0.7;
+    transform: scale(1.02);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.15);
+  }
+  
+  .section-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  .drag-handle {
+    margin-right: 10px;
+    color: #999;
+    cursor: grab;
+  }
+  
+  .section-title-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    color: #666;
+    background-color: transparent;
+    font-size: 15px;
+  }
+  
+  .delete-section-btn {
+    background: none;
+    border: none;
+    color: #ff0000;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .section-content-input {
+    width: 100%;
+    padding: 12px 15px;
+    border: none;
+    outline: none;
+    color: #666;
+    min-height: 80px;
+    resize: vertical;
+    background-color: #fff;
+  }
+  
+  /* Section image styling */
+  .section-image-container {
+    padding: 10px 15px;
+    border-top: 1px solid #f0f0f0;
+  }
+  
+  .section-image-upload {
+    width: 100%;
+    padding: 10px;
+    background: none;
+    border: 1px dashed #ccc;
+    color: #666;
+    cursor: pointer;
+    text-align: center;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    border-radius: 5px;
+  }
+  
+  .section-image-upload:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .section-image-preview {
+    position: relative;
+  }
+  
+  .section-image {
+    width: 100%;
+    max-height: 300px;
+    object-fit: cover;
+    display: block;
+    border-radius: 5px;
+  }
+  
+  .section-image-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 0;
+  }
+  
+  .section-image-change,
+  .section-image-remove {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 5px 10px;
+    margin-left: 10px;
+    font-size: 14px;
+    transition: color 0.2s;
+  }
+  
+  .section-image-change:hover {
+    color: #00a0ff;
+  }
+  
+  .section-image-remove:hover {
+    color: #ff0000;
+  }
+  
+  .add-section-btn {
+    width: 100%;
+    padding: 12px 0;
+    background: none;
+    border: none;
+    color: #ff7b00;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+    transition: color 0.2s;
+    margin-top: 5px;
+  }
+  
+  .add-section-btn:hover {
+    color: #e56f00;
+    text-decoration: underline;
+  }
+  
+  /* Action buttons */
+  .action-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    padding-top: 15px;
+  }
+  
+  .delete-btn {
+    padding: 10px 20px;
+    background: none;
+    border: 1px solid #ff0000;
+    color: #ff0000;
+    cursor: pointer;
+    font-weight: normal;
+    transition: background-color 0.2s;
+    border-radius: 5px;
+  }
+  
+  .delete-btn:hover {
+    background-color: #fff0f0;
+  }
+  
+  .publish-btn {
+    padding: 10px 30px;
+    background-color: #ff7b00;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .publish-btn:hover {
+    background-color: #e56f00;
+  }
+  
+  /* Placeholder styling */
+  ::placeholder {
+    color: #999;
+    opacity: 1;
+  }
+  
+  :-ms-input-placeholder {
+    color: #999;
+  }
+  
+  ::-ms-input-placeholder {
+    color: #999;
+  }
+  
+  /* Responsive styling */
+  @media (max-width: 768px) {
+    .form-section {
+      padding: 15px;
+    }
+    
+    .title-input {
+      font-size: 16px;
+    }
+    
+    .action-buttons {
+      flex-direction: column-reverse;
+      gap: 10px;
+    }
+    
+    .publish-btn,
+    .delete-btn {
+      width: 100%;
+    }
+  }

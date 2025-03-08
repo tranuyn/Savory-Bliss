@@ -37,7 +37,7 @@ const register = async (req, res) => {
     const savedUser = await newUser.save();
 
     // Create JWT tokens
-    const accessToken = jwt.sign(
+    const token = jwt.sign(
       { id: savedUser._id },
       process.env.JWT_ACCESS_KEY,
       { expiresIn: "30min" }
@@ -60,7 +60,7 @@ const register = async (req, res) => {
         Ava: savedUser.Ava,
         bio: savedUser.bio,
       },
-      accessToken,
+      token,
       refreshToken,
     });
   } catch (error) {
@@ -96,7 +96,7 @@ const login = async (req, res) => {
     }
 
     // Create JWT tokens
-    const accessToken = jwt.sign(
+    const token = jwt.sign(
       { id: user._id },
       process.env.JWT_ACCESS_KEY,
       { expiresIn: "30min" }
@@ -126,9 +126,10 @@ const login = async (req, res) => {
         Ava: user.Ava,
         bio: user.bio,
         createdAt: user.createdAt,
-        updatedAt: user.updatedAt
+        updatedAt: user.updatedAt,
+        Position: user.Position
       },
-      accessToken,
+      token,
       refreshToken,
     });
   } catch (error) {
@@ -155,7 +156,7 @@ const refreshToken = async (req, res) => {
       }
 
       // Create new tokens
-      const newAccessToken = jwt.sign(
+      const newToken = jwt.sign(
         { id: decoded.id },
         process.env.JWT_ACCESS_KEY,
         { expiresIn: "30min" }
@@ -169,7 +170,7 @@ const refreshToken = async (req, res) => {
 
       // Respond with new tokens
       res.status(200).json({
-        accessToken: newAccessToken,
+        token: newToken,
         refreshToken: newRefreshToken
       });
     });
@@ -344,6 +345,46 @@ const updateProfile = async (req, res) => {
   }
 };
 
+// Verify token
+const verifyToken = async (req, res) => {
+  try {
+    // Lấy token từ header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: "Không có token" });
+    }
+    
+    const token = authHeader.split(' ')[1];
+    
+    // Xác thực token
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_KEY);
+    
+    // Tìm user theo ID
+    const user = await User.findById(decoded.id).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
+    }
+    
+    // Trả về thông tin người dùng
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        name: user.name,
+        Ava: user.Ava,
+        bio: user.bio,
+        Position: user.Position
+      }
+    });
+  } catch (error) {
+    console.error("Lỗi xác thực token:", error);
+    return res.status(401).json({ message: "Token không hợp lệ" });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -352,5 +393,6 @@ module.exports = {
   logout,
   forgotPassword,
   getProfile,
-  updateProfile
+  updateProfile,
+  verifyToken
 };

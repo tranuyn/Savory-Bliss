@@ -9,6 +9,7 @@ const {
   forgotPassword,
   getProfile,
   updateProfile,
+  verifyToken
 } = require("../controllers/authController");
 
 router.post("/login", login);
@@ -17,4 +18,6 @@ router.post("/refresh", refreshToken);
 router.post("/forgotPassword", forgotPassword);
 router.post("/logout/:id", logout);
 router.patch("/resetPassword/:id", resetPassword);
+router.get("/verify", verifyToken);  // Thêm route này
+
 module.exports = router;

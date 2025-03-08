@@ -1,26 +1,39 @@
 const jwt = require('jsonwebtoken');
 
-export const verifyToken = async (req, res, next) => {
+const protect = async (req, res, next) => {
   try {
     let token = req.header("Authorization");
+    console.log("Received token:", token);
 
     if (!token) {
-      return res.status(403).send("Access Denied");
+      console.log("No token provided");
+      return res.status(403).json({ success: false, message: "Access Denied" });
     }
 
     if (token.startsWith("Bearer ")) {
-      token = token.slice(7, token.length).trimLeft();
+      token = token.slice(7).trim();
     }
 
+    console.log("Verifying token:", token);
     const verified = jwt.verify(token, process.env.JWT_SECRET);
-    if (verified) {
-      console.log("verified");
-    } else {
-      console.log("not verified");
+    console.log("Token verified, user:", verified);
+    
+    // Đảm bảo verified chứa _id hoặc id
+    if (!verified._id && !verified.id) {
+      return res.status(401).json({ success: false, message: "Invalid user data in token" });
     }
-    req.user = verified;
+    
+    // Đảm bảo req.user có trường _id
+    req.user = {
+      _id: verified._id || verified.id,
+      ...verified
+    };
+    
     next();
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Token verification error:", err);
+    res.status(401).json({ success: false, message: "Invalid token" });
   }
 };
+
+module.exports = { protect };
