@@ -17,7 +17,7 @@ export const searchRecipes = createAsyncThunk(
       queryParams.append('limit', Math.max(1, Math.min(50, Number(limit))));
 
       const response = await fetch(
-        `http://localhost:5000/api/recipes/search?${queryParams}`,
+        `${API_URL}/search?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -45,7 +45,7 @@ export const fetchRecipes = createAsyncThunk(
   'recipes/fetchRecipes',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_URL}/recipes`);
+      const response = await fetch(API_URL);
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -65,7 +65,7 @@ export const fetchRecipeById = createAsyncThunk(
   'recipes/fetchRecipeById',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_URL}/recipes/${id}`);
+      const response = await fetch(`${API_URL}/${id}`);
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -129,7 +129,7 @@ export const addRecipe = createAsyncThunk(
         });
       }
       
-      const response = await fetch(`${API_URL}/recipes`, {
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -182,7 +182,7 @@ export const updateRecipe = createAsyncThunk(
         });
       }
       
-      const response = await fetch(`${API_URL}/recipes/${id}`, {
+      const response = await fetch(`${API_URL}/${id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -211,7 +211,7 @@ export const deleteRecipe = createAsyncThunk(
       const { auths } = getState();
       const token = auths.token;
       
-      const response = await fetch(`${API_URL}/recipes/${id}`, {
+      const response = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -388,4 +388,3 @@ const recipeSlice = createSlice({
 
 export const { resetRecipeState, clearSearchResults } = recipeSlice.actions;
 export default recipeSlice.reducer;
-

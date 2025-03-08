@@ -1,5 +1,3 @@
-const recipeService = require('../services/recipeService');
-
 const Recipe = require('../models/Recipe');
 const fs = require('fs');
 const path = require('path');
@@ -8,7 +6,7 @@ const multer = require('multer');
 // Cấu hình multer để lưu file tạm thời vào bộ nhớ
 const storage = multer.memoryStorage();
 
-const upload = multer({ 
+const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // Giới hạn 5MB
   fileFilter: (req, file, cb) => {
@@ -25,7 +23,6 @@ const uploadImages = upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'sectionImages', maxCount: 10 }
 ]);
-
 
 // Hàm chuyển đổi ảnh sang Base64
 function convertImageToBase64(buffer, mimetype) {
@@ -44,7 +41,7 @@ exports.addRecipe = async (req, res) => {
       // Parse data từ form
       const parsedIngredients = ingredients ? ingredients.split('\n').filter(item => item.trim() !== '') : [];
       const parsedTags = tags ? tags.split(',').map(tag => tag.trim()) : [];
-      
+
       let parsedSections = [];
       if (sections) {
         try {
@@ -64,16 +61,16 @@ exports.addRecipe = async (req, res) => {
       // Xử lý hình ảnh cho các sections
       if (req.files && req.files.sectionImages) {
         const sectionImages = req.files.sectionImages;
-        
+
         // Gán Base64 cho từng section dựa trên tên file
         for (let i = 0; i < parsedSections.length; i++) {
           const section = parsedSections[i];
           // Tìm hình ảnh cho section dựa trên originalname hoặc fieldname
-          const sectionImage = sectionImages.find(img => 
-            img.originalname.includes(section.id) || 
+          const sectionImage = sectionImages.find(img =>
+            img.originalname.includes(section.id) ||
             img.fieldname.includes(section.id)
           );
-          
+
           if (sectionImage) {
             section.imageUrl = convertImageToBase64(sectionImage.buffer, sectionImage.mimetype);
           }
@@ -96,7 +93,7 @@ exports.addRecipe = async (req, res) => {
       });
 
       await newRecipe.save();
-      
+
       res.status(201).json({
         success: true,
         data: newRecipe
@@ -117,7 +114,7 @@ exports.getAllRecipes = async (req, res) => {
     const recipes = await Recipe.find()
       .sort({ createdAt: -1 })
       .populate('author', 'username');
-    
+
     res.status(200).json({
       success: true,
       count: recipes.length,
@@ -136,14 +133,14 @@ exports.getRecipeById = async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id)
       .populate('author', 'username');
-    
+
     if (!recipe) {
       return res.status(404).json({
         success: false,
         message: 'Recipe not found'
       });
     }
-    
+
     res.status(200).json({
       success: true,
       data: recipe
@@ -160,14 +157,14 @@ exports.getRecipeById = async (req, res) => {
 exports.updateRecipe = async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
-    
+
     if (!recipe) {
       return res.status(404).json({
         success: false,
         message: 'Recipe not found'
       });
     }
-    
+
     // Kiểm tra quyền sở hữu
     if (recipe.author.toString() !== req.user._id.toString()) {
       return res.status(403).json({
@@ -175,53 +172,53 @@ exports.updateRecipe = async (req, res) => {
         message: 'Not authorized to update this recipe'
       });
     }
-    
+
     // Logic xử lý tương tự addRecipe nhưng cập nhật thay vì tạo mới
     uploadImages(req, res, async (err) => {
       if (err) {
         return res.status(400).json({ success: false, message: err.message });
       }
-      
+
       const { title, description, tags, ingredients, sections } = req.body;
 
       // Update với dữ liệu mới
       recipe.title = title || recipe.title;
       recipe.description = description || recipe.description;
-      
+
       if (tags) {
         recipe.tags = tags.split(',').map(tag => tag.trim());
       }
-      
+
       if (ingredients) {
         recipe.ingredients = ingredients.split('\n').filter(item => item.trim() !== '');
       }
-      
+
       if (req.files && req.files.image && req.files.image[0]) {
         const mainImage = req.files.image[0];
         recipe.imageUrl = convertImageToBase64(mainImage.buffer, mainImage.mimetype);
       }
-      
+
       if (sections) {
         try {
           const parsedSections = JSON.parse(sections);
-          
+
           // Xử lý hình ảnh cho các sections
           if (req.files && req.files.sectionImages) {
             const sectionImages = req.files.sectionImages;
-            
+
             for (let i = 0; i < parsedSections.length; i++) {
               const section = parsedSections[i];
-              const sectionImage = sectionImages.find(img => 
-                img.originalname.includes(section.id) || 
+              const sectionImage = sectionImages.find(img =>
+                img.originalname.includes(section.id) ||
                 img.fieldname.includes(section.id)
               );
-              
+
               if (sectionImage) {
                 section.imageUrl = convertImageToBase64(sectionImage.buffer, sectionImage.mimetype);
               }
             }
           }
-          
+
           recipe.sections = parsedSections.map(section => ({
             title: section.title,
             content: section.content,
@@ -231,11 +228,11 @@ exports.updateRecipe = async (req, res) => {
           return res.status(400).json({ success: false, message: 'Invalid sections format' });
         }
       }
-      
+
       recipe.updatedAt = Date.now();
-      
+
       await recipe.save();
-      
+
       res.status(200).json({
         success: true,
         data: recipe
@@ -253,14 +250,14 @@ exports.updateRecipe = async (req, res) => {
 exports.deleteRecipe = async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
-    
+
     if (!recipe) {
       return res.status(404).json({
         success: false,
         message: 'Recipe not found'
       });
     }
-    
+
     // Kiểm tra quyền sở hữu
     if (recipe.author.toString() !== req.user._id.toString()) {
       return res.status(403).json({
@@ -268,10 +265,10 @@ exports.deleteRecipe = async (req, res) => {
         message: 'Not authorized to delete this recipe'
       });
     }
-    
+
     // Sử dụng deleteOne thay vì remove
     await Recipe.deleteOne({ _id: req.params.id });
-    
+
     res.status(200).json({
       success: true,
       data: {}
@@ -285,42 +282,14 @@ exports.deleteRecipe = async (req, res) => {
   }
 };
 
-exports.searchRecipes = async (req, res) => {
-  try {
-    const { query: searchQuery, tags, page, limit } = req.query;
-    
-    const searchResults = await recipeService.searchRecipes({
-      searchQuery,
-      tags: tags ? tags.split(',') : [],
-      page: parseInt(page) || 1,
-      limit: parseInt(limit) || 10
-    });
-
-    res.status(200).json({
-      success: true,
-      data: searchResults.recipes,
-      pagination: searchResults.pagination
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Không thể tìm kiếm công thức",
-      error: error.message
-    });
-  }
-};
-
-// Các API khác có thể thêm vào đây
-
 exports.getRecipesByUser = async (req, res) => {
   try {
     const userId = req.params.userId;
-    
+
     const recipes = await Recipe.find({ author: userId })
       .sort({ createdAt: -1 })
       .populate('author', 'username');
-    
+
     res.status(200).json({
       success: true,
       count: recipes.length,
@@ -338,14 +307,14 @@ exports.getRecipesByUser = async (req, res) => {
 exports.searchRecipes = async (req, res) => {
   try {
     const { query } = req.query;
-    
+
     if (!query) {
       return res.status(400).json({
         success: false,
         message: 'Search query is required'
       });
     }
-    
+
     // Tìm kiếm theo title, description hoặc tags
     const recipes = await Recipe.find({
       $or: [
@@ -356,7 +325,7 @@ exports.searchRecipes = async (req, res) => {
     })
       .sort({ createdAt: -1 })
       .populate('author', 'username');
-    
+
     res.status(200).json({
       success: true,
       count: recipes.length,
@@ -374,11 +343,11 @@ exports.searchRecipes = async (req, res) => {
 exports.getRecipesByTag = async (req, res) => {
   try {
     const { tag } = req.params;
-    
+
     const recipes = await Recipe.find({ tags: { $in: [new RegExp(tag, 'i')] } })
       .sort({ createdAt: -1 })
       .populate('author', 'username');
-    
+
     res.status(200).json({
       success: true,
       count: recipes.length,
@@ -397,19 +366,19 @@ exports.toggleFavoriteRecipe = async (req, res) => {
   try {
     const recipeId = req.params.id;
     const userId = req.user._id;
-    
+
     const recipe = await Recipe.findById(recipeId);
-    
+
     if (!recipe) {
       return res.status(404).json({
         success: false,
         message: 'Recipe not found'
       });
     }
-    
+
     // Kiểm tra xem người dùng đã thích công thức này chưa
     const isFavorited = recipe.favorites && recipe.favorites.includes(userId);
-    
+
     if (isFavorited) {
       // Nếu đã thích, bỏ thích
       recipe.favorites = recipe.favorites.filter(
@@ -422,9 +391,9 @@ exports.toggleFavoriteRecipe = async (req, res) => {
       }
       recipe.favorites.push(userId);
     }
-    
+
     await recipe.save();
-    
+
     res.status(200).json({
       success: true,
       isFavorited: !isFavorited,
@@ -442,11 +411,11 @@ exports.toggleFavoriteRecipe = async (req, res) => {
 exports.getFavoriteRecipes = async (req, res) => {
   try {
     const userId = req.user._id;
-    
+
     const recipes = await Recipe.find({ favorites: userId })
       .sort({ createdAt: -1 })
       .populate('author', 'username');
-    
+
     res.status(200).json({
       success: true,
       count: recipes.length,
