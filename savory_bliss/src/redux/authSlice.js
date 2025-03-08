@@ -1,5 +1,52 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
+// Thunk để khởi tạo trạng thái xác thực
+export const initAuth = createAsyncThunk(
+  "auth/initAuth",
+  async (_, { dispatch }) => {
+    console.log("initAuth thunk running");
+    const token = localStorage.getItem("token");
+    const refreshToken = localStorage.getItem("refreshToken");
+    
+    console.log("Token from localStorage:", token ? "exists" : "not found");
+    
+    if (token) {
+      try {
+        console.log("Đang xác thực token:", token);
+        const response = await fetch("http://localhost:5000/auth/verify", {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        
+        console.log("Verify response status:", response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Dữ liệu xác thực:", data);
+          return { 
+            token, 
+            refreshToken, 
+            user: data.user 
+          };
+        } else {
+          console.error("Token không hợp lệ, status:", response.status);
+          localStorage.removeItem("token");
+          localStorage.removeItem("refreshToken");
+          return null;
+        }
+      } catch (error) {
+        console.error("Lỗi khi xác minh token:", error);
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        return null;
+      }
+    }
+    return null;
+  }
+);
+
 // Thunk đăng ký
 export const registerUser = createAsyncThunk(
   "auth/registerUser",
@@ -21,6 +68,15 @@ export const registerUser = createAsyncThunk(
 
       const data = await response.json();
       console.log("Đăng ký thành công:", data);
+      
+      // Lưu token vào localStorage
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
+      if (data.refreshToken) {
+        localStorage.setItem("refreshToken", data.refreshToken);
+      }
+      
       return data;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -49,8 +105,14 @@ export const loginUser = createAsyncThunk(
 
       const data = await response.json();
       console.log("Dữ liệu nhận được:", data);
+      
+      // Đảm bảo lưu đúng tên biến token
       localStorage.setItem("token", data.token);
       localStorage.setItem("refreshToken", data.refreshToken);
+      
+      console.log("Token đã lưu:", localStorage.getItem("token"));
+      console.log("RefreshToken đã lưu:", localStorage.getItem("refreshToken"));
+      
       return data;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -81,6 +143,8 @@ export const refreshAccessToken = createAsyncThunk(
       }
 
       const data = await response.json();
+      // Lưu token mới vào localStorage
+      localStorage.setItem("token", data.token);
       return data.token;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -159,6 +223,35 @@ export const resetPassword = createAsyncThunk(
   }
 );
 
+// Thunk cập nhật thông tin người dùng
+export const updateProfile = createAsyncThunk(
+  "auth/updateProfile",
+  async ({userId, profileData }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/auth/updateProfile/${userId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(profileData),
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Could not update profile");
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 // Slice auth
 export const authSlice = createSlice({
   name: "auth",
@@ -170,6 +263,7 @@ export const authSlice = createSlice({
     isFetching: false,
     role: null,
     registrationSuccess: false,
+    isAuthReady: false, // Thêm trạng thái để biết đã hoàn tất kiểm tra xác thực chưa
   },
   reducers: {
     updateAccessToken: (state, action) => {
@@ -183,16 +277,35 @@ export const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Xử lý initAuth
+      .addCase(initAuth.pending, (state) => {
+        state.isAuthReady = false;
+      })
+      .addCase(initAuth.fulfilled, (state, action) => {
+        if (action.payload) {
+          state.token = action.payload.token;
+          state.refreshToken = action.payload.refreshToken;
+          state.user = action.payload.user;
+          state.role = action.payload.user?.Position || null;
+        }
+        state.isAuthReady = true;
+      })
+      .addCase(initAuth.rejected, (state) => {
+        state.isAuthReady = true;
+      })
       // Xử lý registerUser
       .addCase(registerUser.pending, (state) => {
         state.isFetching = true;
         state.error = null;
         state.registrationSuccess = false;
       })
-      .addCase(registerUser.fulfilled, (state) => {
+      .addCase(registerUser.fulfilled, (state, action) => {
         state.isFetching = false;
         state.error = null;
         state.registrationSuccess = true;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.refreshToken = action.payload.refreshToken;
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isFetching = false;
@@ -256,6 +369,21 @@ export const authSlice = createSlice({
         state.user = action.payload.user;
       })
       .addCase(resetPassword.rejected, (state, action) => {
+        state.isFetching = false;
+        state.error = action.payload;
+      })
+
+      // Xử lý updateProfile
+      .addCase(updateProfile.pending, (state) => {
+        state.isFetching = true;
+        state.error = null;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.isFetching = false;
+        state.error = null;
+        state.user = action.payload.user;
+      })
+      .addCase(updateProfile.rejected, (state, action) => {
         state.isFetching = false;
         state.error = action.payload;
       });

@@ -30,7 +30,7 @@ export default function NavigationBar({ user }) {
           <Navbar.Brand href="/" className="logo-text fw-bold fs-4">
             Savory Bliss
           </Navbar.Brand>
-          <SearchBar />
+          <SearchBar href="/SearchResult"/>
         </Nav>
 
         {/* Navigation Tabs */}
@@ -56,7 +56,7 @@ export default function NavigationBar({ user }) {
         <Nav className="d-flex align-items-center gap-4">
           <Button
             className="normal-button rounded-pill px-3"
-            href="/add-recipe"
+            href="/addrecipe"
           >
             <Plus className="fs-3 fw-bold cursor-pointer" /> Add a recipe
           </Button>
@@ -81,7 +81,7 @@ export default function NavigationBar({ user }) {
                 />
               </Dropdown.Toggle>
               <Dropdown.Menu className="dropdown-menu-custom">
-                <Dropdown.Item href="/profile">User Center</Dropdown.Item>
+                <Dropdown.Item href="/AccountSetting">User Center</Dropdown.Item>
                 <Dropdown.Divider />
                 <Dropdown.Item onClick={handleLogout}>
                   Log Out

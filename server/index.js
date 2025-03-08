@@ -3,7 +3,6 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const multer = require("multer");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const path = require("path");
@@ -23,40 +22,22 @@ app.use(helmet());
 app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(morgan("dev"));
 app.use(express.json());
+
+// Thiết lập đường dẫn tĩnh
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Phục vụ thư mục public cho các tài nguyên tĩnh khác
 app.use(express.static("public"));
 
-// File storage configuration
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/assets");
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  },
-});
-
-const upload = multer({ storage: storage });
-
-// File upload route
-app.post("/upload", upload.single("file"), (req, res) => {
-  const file = req.file;
-  if (!file) {
-    return res.status(400).json({ message: "No file uploaded" });
-  }
-
-  const fileInfo = {
-    originalname: file.originalname,
-    mimetype: file.mimetype,
-    size: file.size,
-    path: file.path,
-  };
-
-  res.send(fileInfo);
-});
+// Đảm bảo thư mục uploads tồn tại
+const fs = require('fs');
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // Import routes
 const authRoutes = require("./routes/auth");
-// const userRoutes = require('./routes/user');
+const recipeRoutes = require("./routes/recipe");
 
 // Basic route
 app.get("/", (req, res) => {
@@ -65,10 +46,24 @@ app.get("/", (req, res) => {
 
 // Apply routes
 app.use("/auth", authRoutes);
+app.use("/api/recipes", recipeRoutes);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Server Error'
+  });
+});
 
 // Connect to MongoDB
 mongoose
-  .connect(process.env.MONGO_URI, {})
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
   .then(() => console.log("MongoDB connected successfully"))
   .catch((err) => console.log("MongoDB connection error:", err));
 
