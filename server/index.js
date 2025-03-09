@@ -48,6 +48,15 @@ app.get("/", (req, res) => {
 app.use("/auth", authRoutes);
 app.use("/api/recipes", recipeRoutes);
 
+app.use(cors({
+  origin: [
+    "http://localhost:3000",  // For local development
+    "https://savory-bliss.onrender.com/"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
