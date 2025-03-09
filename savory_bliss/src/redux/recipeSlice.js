@@ -1,57 +1,90 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+
 const API_URL = 'http://localhost:5000/api/recipes';
 
-// Search Recipes Thunk
+//search recipes
 export const searchRecipes = createAsyncThunk(
   'recipes/search',
   async ({ searchQuery, tags, page = 1, limit = 10 }, { rejectWithValue }) => {
     try {
+      console.log('Searching with params:', { searchQuery, tags, page, limit });
+      
       const queryParams = new URLSearchParams();
-      if (searchQuery?.trim()) {
-        queryParams.append('query', searchQuery.trim());
-      }
-      if (tags && tags.length) {
-        queryParams.append('tags', tags.join(','));
-      }
-      queryParams.append('page', Math.max(1, Number(page)));
-      queryParams.append('limit', Math.max(1, Math.min(50, Number(limit))));
 
-      const response = await fetch(
-        `${API_URL}/search?${queryParams}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
+      const trimmedQuery = searchQuery?.trim();
+      if (trimmedQuery) {
+        queryParams.append('query', trimmedQuery);
+      }
+
+
+      // Handle tags array properly
+      if (Array.isArray(tags) && tags.length > 0) {
+        // Filter out empty tags and join
+        const validTags = tags.filter(tag => tag?.trim()).join(',');
+        if (validTags) {
+          queryParams.append('tags', validTags);
         }
-      );
+      }
+
+      // Validate pagination params
+      const validPage = Math.max(1, parseInt(page) || 1);
+      const validLimit = Math.min(50, Math.max(1, parseInt(limit) || 10));
+
+      queryParams.append('page', validPage);
+      queryParams.append('limit', validLimit);
+
+      // Make API request
+      const url = `${API_URL}/search?${queryParams}`;
+      console.log('Making request to:', url);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache'
+        }
+      });
 
       const data = await response.json();
+      console.log('Search response:', data);
 
       if (!response.ok) {
-        return rejectWithValue(data.message || 'Không thể tìm kiếm công thức');
+        throw new Error(data.message || 'Không thể tìm kiếm công thức');
       }
 
-      return data;
+      // Validate response data structure
+      if (!data.data || !Array.isArray(data.data)) {
+        throw new Error('Invalid response format');
+      }
+
+      return {
+        data: data.data,
+        pagination: {
+          total: data.pagination?.total || 0,
+          page: validPage,
+          pages: data.pagination?.pages || 1
+        }
+      };
+
     } catch (error) {
+      console.error('Search error:', error);
       return rejectWithValue(error.message || 'Đã xảy ra lỗi khi tìm kiếm');
     }
   }
 );
-
 // Thunk để lấy tất cả công thức
 export const fetchRecipes = createAsyncThunk(
   'recipes/fetchRecipes',
   async (_, { rejectWithValue }) => {
     try {
       const response = await fetch(API_URL);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Không thể lấy danh sách công thức');
       }
-      
+
       const data = await response.json();
       return data.data;
     } catch (error) {
@@ -66,12 +99,12 @@ export const fetchRecipeById = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await fetch(`${API_URL}/${id}`);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Không thể lấy thông tin công thức');
       }
-      
+
       const data = await response.json();
       return data.data;
     } catch (error) {
@@ -86,12 +119,12 @@ export const fetchUserRecipes = createAsyncThunk(
   async (userId, { rejectWithValue }) => {
     try {
       const response = await fetch(`${API_URL}/user/${userId}`);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Không thể lấy danh sách công thức của người dùng');
       }
-      
+
       const data = await response.json();
       return data.data;
     } catch (error) {
@@ -107,28 +140,28 @@ export const addRecipe = createAsyncThunk(
     try {
       const { auths } = getState();
       const token = auths.token;
-      
+
       const formData = new FormData();
-      
+
       // Thêm các trường dữ liệu vào FormData
       formData.append('title', recipeData.title);
       formData.append('description', recipeData.description);
       formData.append('tags', JSON.stringify(recipeData.tags));
       formData.append('ingredients', JSON.stringify(recipeData.ingredients));
       formData.append('sections', JSON.stringify(recipeData.sections));
-      
+
       // Thêm hình ảnh chính
       if (recipeData.image) {
         formData.append('image', recipeData.image);
       }
-      
+
       // Thêm hình ảnh cho các phần
       if (recipeData.sectionImages && recipeData.sectionImages.length > 0) {
         recipeData.sectionImages.forEach((image, index) => {
           formData.append('sectionImages', image);
         });
       }
-      
+
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
@@ -136,12 +169,12 @@ export const addRecipe = createAsyncThunk(
         },
         body: formData
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Không thể thêm công thức');
       }
-      
+
       const data = await response.json();
       return data.data;
     } catch (error) {
@@ -157,21 +190,21 @@ export const updateRecipe = createAsyncThunk(
     try {
       const { auths } = getState();
       const token = auths.token;
-      
+
       const formData = new FormData();
-      
+
       // Thêm các trường dữ liệu vào FormData
       formData.append('title', recipeData.title);
       formData.append('description', recipeData.description);
       formData.append('tags', JSON.stringify(recipeData.tags));
       formData.append('ingredients', JSON.stringify(recipeData.ingredients));
       formData.append('sections', JSON.stringify(recipeData.sections));
-      
+
       // Thêm hình ảnh chính nếu có
       if (recipeData.image && recipeData.image instanceof File) {
         formData.append('image', recipeData.image);
       }
-      
+
       // Thêm hình ảnh cho các phần
       if (recipeData.sectionImages && recipeData.sectionImages.length > 0) {
         recipeData.sectionImages.forEach((image, index) => {
@@ -181,7 +214,7 @@ export const updateRecipe = createAsyncThunk(
           }
         });
       }
-      
+
       const response = await fetch(`${API_URL}/${id}`, {
         method: 'PUT',
         headers: {
@@ -189,12 +222,12 @@ export const updateRecipe = createAsyncThunk(
         },
         body: formData
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Không thể cập nhật công thức');
       }
-      
+
       const data = await response.json();
       return data.data;
     } catch (error) {
@@ -210,19 +243,19 @@ export const deleteRecipe = createAsyncThunk(
     try {
       const { auths } = getState();
       const token = auths.token;
-      
+
       const response = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Không thể xóa công thức');
       }
-      
+
       return id;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -294,7 +327,7 @@ const recipeSlice = createSlice({
         state.isFetching = false;
         state.error = action.payload;
       })
-      
+
       // Xử lý fetchRecipeById
       .addCase(fetchRecipeById.pending, (state) => {
         state.isFetching = true;
@@ -310,7 +343,7 @@ const recipeSlice = createSlice({
         state.isFetching = false;
         state.error = action.payload;
       })
-      
+
       // Xử lý fetchUserRecipes
       .addCase(fetchUserRecipes.pending, (state) => {
         state.isFetching = true;
@@ -325,7 +358,7 @@ const recipeSlice = createSlice({
         state.isFetching = false;
         state.error = action.payload;
       })
-      
+
       // Xử lý addRecipe
       .addCase(addRecipe.pending, (state) => {
         state.isAdding = true;
@@ -343,7 +376,7 @@ const recipeSlice = createSlice({
         state.success = false;
         state.error = action.payload;
       })
-      
+
       // Xử lý updateRecipe
       .addCase(updateRecipe.pending, (state) => {
         state.isUpdating = true;
@@ -365,7 +398,7 @@ const recipeSlice = createSlice({
         state.success = false;
         state.error = action.payload;
       })
-      
+
       // Xử lý deleteRecipe
       .addCase(deleteRecipe.pending, (state) => {
         state.isDeleting = true;

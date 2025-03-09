@@ -55,12 +55,12 @@ const ProfileForm = () => {
         Ava: selectedImage ? previewUrl : user?.Ava
       };
 
-      // const resultAction = await dispatch(
-      //   updateProfile({
-      //     userId: user.id,
-      //     profileData: profileData
-      //   })
-      // ).unwrap();
+      const resultAction = await dispatch(
+        updateProfile({
+          userId: user.id,
+          profileData: profileData
+        })
+      ).unwrap();
 
       setMessage({
         type: 'success',
@@ -94,12 +94,13 @@ const ProfileForm = () => {
         <h2 className="section-title">Informations</h2>
         <div className="section-content">
           <div className="avatar-section">
-            <div className="avatar-container">
+            <div className="avatar-container" >
               {previewUrl ? (
                 <img
                   src={previewUrl}
                   alt="Profile"
-                  className="profile-avatar"
+                  className="profile-avatar1"
+                  style={{ objectFit: 'cover', width: '100%', height: '100%' }}
                 />
               ) : (
                 <div className="avatar-placeholder">

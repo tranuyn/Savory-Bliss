@@ -1,80 +1,84 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useSearchParams } from "react-router-dom";
 import { searchRecipes } from "../../redux/recipeSlice";
+import FilterAndSort from "../../Component/FilterAndSort";
 import "./SearchResult.css";
 
 function SearchResult() {
   const dispatch = useDispatch();
   const [searchParams] = useSearchParams();
-  const { recipes, isLoading, error, pagination } = useSelector((state) => state.recipes);
+  
+  // Get search query from URL
+  const query = searchParams.get('query');
 
-  const handlePageChange = async (page) => {
-    const currentQuery = searchParams.get('query') || '';
-    const currentTags = searchParams.get('tags') || '';
-    
-    try {
-      await dispatch(searchRecipes({
-        searchQuery: currentQuery,
-        tags: currentTags ? currentTags.split(',') : [],
-        page: page,
-        limit: 10
-      })).unwrap();
-    } catch (error) {
-      console.error('Failed to fetch page:', error);
+  // Get state from Redux
+  const { recipes, isFetching, error } = useSelector(state => state.recipes);
+
+  // Fetch recipes when search query changes
+  useEffect(() => {
+    if (query) {
+      dispatch(searchRecipes({ 
+        searchQuery: query,
+        tags: [],
+        page: 1, 
+        limit: 10 
+      }));
     }
-  };
+  }, [dispatch, query]);
 
   return (
-    <div className="search-results-container">
-      <h2>Kết quả tìm kiếm ({pagination.total} công thức)</h2>
+    <div className="home-container">
+      <div className="home-layout">
+        <div className="main-content">
+          <div className="main-header">
+            <h2 className="page-title">
+              Search Results {query ? `for "${query}"` : ''}
+            </h2>
+          </div>
 
-      <div className="recipe-list">
-        {recipes.map((recipe) => (
-          <Link to={`/recipe/${recipe._id}`} key={recipe._id} className="recipe-item">
-            <span className="recipe-title">{recipe.title}</span>
-          </Link>
-        ))}
-      </div>
-      
-      {/* <div className="recipe-grid">
-        {recipes.map((recipe) => (
-          <Link to={`/recipe/${recipe._id}`} key={recipe._id} className="recipe-card">
-            <div className="recipe-image">
-              <img src={recipe.imageUrl} alt={recipe.title} />
-            </div>
-            <div className="recipe-info">
-              <h3>{recipe.title}</h3>
-              <p className="recipe-description">{recipe.description}</p>
-              <div className="recipe-tags">
-                {recipe.tags.map((tag, index) => (
-                  <span key={index} className="tag">
-                    {tag}
-                  </span>
-                ))}
+          <div className="recipes-grid">
+            {isFetching ? (
+              <div className="loading">Loading recipes...</div>
+            ) : recipes && recipes.length > 0 ? (
+              recipes.map(recipe => (
+                <div key={recipe._id} className="recipe-card">
+                  <Link to={`/recipe/${recipe._id}`} className="recipe-link">
+                    <div className="recipe-image">
+                      <img src={recipe.imageUrl} alt={recipe.title} />
+                    </div>
+                    <div className="recipe-info">
+                      <h3 className="recipe-title">{recipe.title}</h3>
+                      <p className="recipe-description">{recipe.description}</p>
+                      <div className="recipe-tags">
+                        {recipe.tags.map((tag, index) => (
+                          <span key={index} className="tag">{tag}</span>
+                        ))}
+                      </div>
+                      <div className="recipe-author">
+                        <img
+                          src={recipe.author.Ava}
+                          alt={recipe.author.username}
+                          className="author-avatar"
+                        />
+                        <span className="author-name" style={{marginLeft: 10}}>{recipe.author.username}</span>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              ))
+            ) : (
+              <div className="no-recipes">
+                {query ? `No recipes found for "${query}"` : 'No recipes found'}
               </div>
-              <div className="recipe-author">
-                <img src={recipe.author.Ava} alt={recipe.author.name} className="author-avatar" />
-                <span>{recipe.author.name}</span>
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div> */}
-
-      {pagination.pages > 1 && (
-        <div className="pagination">
-          {Array.from({ length: pagination.pages }, (_, i) => (
-            <button
-              key={i + 1}
-              className={`page-button ${pagination.page === i + 1 ? 'active' : ''}`}
-              onClick={() => handlePageChange(i + 1)}
-            >
-              {i + 1}
-            </button>
-          ))}
+            )}
+          </div>
         </div>
-      )}
+
+        <div className="sidebar">
+          <FilterAndSort />
+        </div>
+      </div>
     </div>
   );
 }

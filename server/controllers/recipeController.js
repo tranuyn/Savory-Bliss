@@ -113,7 +113,7 @@ exports.getAllRecipes = async (req, res) => {
   try {
     const recipes = await Recipe.find()
       .sort({ createdAt: -1 })
-      .populate('author', 'username');
+      .populate('author', 'username name Ava');
 
     res.status(200).json({
       success: true,
@@ -306,32 +306,43 @@ exports.getRecipesByUser = async (req, res) => {
 
 exports.searchRecipes = async (req, res) => {
   try {
-    const { query } = req.query;
+    const { query, page = 1, limit = 10 } = req.query;
+    
+    console.log('Backend received search params:', { query, page, limit });
 
-    if (!query) {
-      return res.status(400).json({
-        success: false,
-        message: 'Search query is required'
-      });
+    // Build search query for title only
+    let searchQuery = {};
+    
+    if (query) {
+      const searchRegex = new RegExp(query.trim(), 'i');
+      searchQuery = {
+        title: searchRegex
+      };
     }
 
-    // Tìm kiếm theo title, description hoặc tags
-    const recipes = await Recipe.find({
-      $or: [
-        { title: { $regex: query, $options: 'i' } },
-        { description: { $regex: query, $options: 'i' } },
-        { tags: { $in: [new RegExp(query, 'i')] } }
-      ]
-    })
+    // Execute search query
+    const recipes = await Recipe.find(searchQuery)
+      .populate('author', 'username name Ava')
       .sort({ createdAt: -1 })
-      .populate('author', 'username');
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+
+    const total = await Recipe.countDocuments(searchQuery);
+
+    console.log('Search results:', { count: recipes.length, total });
 
     res.status(200).json({
       success: true,
-      count: recipes.length,
-      data: recipes
+      data: recipes,
+      pagination: {
+        total,
+        page: parseInt(page),
+        pages: Math.ceil(total / limit)
+      }
     });
+
   } catch (error) {
+    console.error('Search error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',
