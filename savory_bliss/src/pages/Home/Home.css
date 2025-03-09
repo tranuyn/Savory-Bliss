@@ -111,6 +111,14 @@
     font-size: 14px;
     color: #ff7b00;
   }
+
+  .author-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ff7b00;
+  }
   
   .recipe-actions {
     display: flex;

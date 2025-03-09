@@ -31,6 +31,10 @@ function Recipes() {
   const handleAddRecipe = () => {
     navigate('/add-recipe');
   };
+
+  const handleAccountSettings = () => {
+    navigate('/accountSetting');
+  }
   
   return (
     <div className="recipes-container">
@@ -52,7 +56,7 @@ function Recipes() {
               <span className="stats-item">{user?.likes || 1.5}k Likes</span>
             </div>
           </div>
-          <button className="edit-profile-btn">
+          <button className="edit-profile-btn" onClick={handleAccountSettings}>
             <i className="edit-icon">✎</i>
           </button>
         </div>

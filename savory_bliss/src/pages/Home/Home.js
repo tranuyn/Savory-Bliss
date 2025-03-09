@@ -8,25 +8,25 @@ import "./Home.css";
 function Home() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  
+
   // Lấy state từ Redux
   const { recipes, isFetching } = useSelector(state => state.recipes);
-  
+
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // Fetch all recipes when component mounts
   useEffect(() => {
     dispatch(fetchRecipes());
   }, [dispatch]);
-  
+
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
   };
-  
-  const filteredRecipes = recipes && recipes.filter(recipe => 
+
+  const filteredRecipes = recipes && recipes.filter(recipe =>
     recipe.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
+
   return (
     <div className="home-container">
       <div className="home-layout">
@@ -52,12 +52,12 @@ function Home() {
                         ))}
                       </div>
                       <div className="recipe-author">
-                        <img 
-                          src={recipe.author.Ava} 
-                          alt={recipe.author.username} 
+                        <img
+                          src={recipe.author.Ava}
+                          alt={recipe.author.username}
                           className="author-avatar"
                         />
-                        <span className="author-name">{recipe.author.username}</span>
+                        <span className="author-name" style={{ marginLeft: 10 }}>{recipe.author.username}</span>
                       </div>
                     </div>
                   </Link>
