@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+
 const API_URL = 'http://localhost:5000/api/recipes';
 
-// Search Recipes Thunk
+//search recipes
 export const searchRecipes = createAsyncThunk(
   'recipes/search',
   async ({ searchQuery, tags, page = 1, limit = 10 }, { rejectWithValue }) => {
@@ -17,7 +18,7 @@ export const searchRecipes = createAsyncThunk(
       queryParams.append('limit', Math.max(1, Math.min(50, Number(limit))));
 
       const response = await fetch(
-        `http://localhost:5000/api/recipes/search?${queryParams}`,
+        `${API_URL}/search?${queryParams}`,
         {
           method: 'GET',
           headers: {
@@ -33,7 +34,11 @@ export const searchRecipes = createAsyncThunk(
         return rejectWithValue(data.message || 'Không thể tìm kiếm công thức');
       }
 
-      return data;
+      return {
+        data: data.data,
+        pagination: data.pagination
+      };
+
     } catch (error) {
       return rejectWithValue(error.message || 'Đã xảy ra lỗi khi tìm kiếm');
     }
@@ -45,7 +50,7 @@ export const fetchRecipes = createAsyncThunk(
   'recipes/fetchRecipes',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_URL}/recipes`);
+      const response = await fetch(API_URL);
       
       if (!response.ok) {
         const errorData = await response.json();

@@ -45,8 +45,8 @@ export default function NavigationBar({ user }) {
               />
               <TabButton
                 icon={Bookmark}
-                href="/bookmarks"
-                active={location.pathname === "/bookmarks"}
+                href="/saved"
+                active={location.pathname === "/saved"}
               />
             </>
           )}

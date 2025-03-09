@@ -1,81 +1,84 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Link, useSearchParams } from "react-router-dom";
-import { searchRecipes } from "../../redux/recipeSlice";
+import { Link, useNavigate } from "react-router-dom";
+import { fetchRecipes } from "../../redux/recipeSlice";
+import FilterAndSort from "../../Component/FilterAndSort";
 import "./SearchResult.css";
 
 function SearchResult() {
   const dispatch = useDispatch();
-  const [searchParams] = useSearchParams();
-  const { recipes, isLoading, error, pagination } = useSelector((state) => state.recipes);
+  const navigate = useNavigate();
 
-  const handlePageChange = async (page) => {
-    const currentQuery = searchParams.get('query') || '';
-    const currentTags = searchParams.get('tags') || '';
-    
-    try {
-      await dispatch(searchRecipes({
-        searchQuery: currentQuery,
-        tags: currentTags ? currentTags.split(',') : [],
-        page: page,
-        limit: 10
-      })).unwrap();
-    } catch (error) {
-      console.error('Failed to fetch page:', error);
-    }
+  // Lấy state từ Redux
+  const { recipes, isFetching } = useSelector(state => state.recipes);
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Fetch all recipes when component mounts
+  useEffect(() => {
+      dispatch(fetchRecipes());
+  }, [dispatch]);
+
+  const handleSearchChange = (e) => {
+      setSearchQuery(e.target.value);
   };
 
+  const filteredRecipes = recipes && recipes.filter(recipe =>
+      recipe.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="search-results-container">
-      <h2>Kết quả tìm kiếm ({pagination.total} công thức)</h2>
+      <div className="home-container">
+          <div className="home-layout">
+              {/* Main content - Recipe list */}
+              <div className="main-content">
+                  {/* Search bar */}
+                  <div className="main-header">
+                  <h2 className="page-title">Search Result</h2>
+                  </div>
 
-      <div className="recipe-list">
-        {recipes.map((recipe) => (
-          <Link to={`/recipe/${recipe._id}`} key={recipe._id} className="recipe-item">
-            <span className="recipe-title">{recipe.title}</span>
-          </Link>
-        ))}
+                  <div className="recipes-grid">
+                      {isFetching ? (
+                          <div className="loading">Loading recipes...</div>
+                      ) : filteredRecipes && filteredRecipes.length > 0 ? (
+                          filteredRecipes.map(recipe => (
+                              <div key={recipe._id} className="recipe-card">
+                                  <Link to={`/recipe/${recipe._id}`} className="recipe-link">
+                                      <div className="recipe-image">
+                                          <img src={recipe.imageUrl} alt={recipe.title} />
+                                      </div>
+                                      <div className="recipe-info">
+                                          <h3 className="recipe-title">{recipe.title}</h3>
+                                          <p className="recipe-description">{recipe.description}</p>
+                                          <div className="recipe-tags">
+                                              {recipe.tags.map((tag, index) => (
+                                                  <span key={index} className="tag">{tag}</span>
+                                              ))}
+                                          </div>
+                                          <div className="recipe-author">
+                                              <img
+                                                  src={recipe.author.Ava}
+                                                  alt={recipe.author.username}
+                                                  className="author-avatar"
+                                              />
+                                              <span className="author-name">{recipe.author.username}</span>
+                                          </div>
+                                      </div>
+                                  </Link>
+                              </div>
+                          ))
+                      ) : (
+                          <div className="no-recipes">No recipes found.</div>
+                      )}
+                  </div>
+              </div>
+
+              {/* Sidebar - Filter and Sort */}
+              <div className="sidebar">
+                  <FilterAndSort />
+              </div>
+          </div>
       </div>
-      
-      {/* <div className="recipe-grid">
-        {recipes.map((recipe) => (
-          <Link to={`/recipe/${recipe._id}`} key={recipe._id} className="recipe-card">
-            <div className="recipe-image">
-              <img src={recipe.imageUrl} alt={recipe.title} />
-            </div>
-            <div className="recipe-info">
-              <h3>{recipe.title}</h3>
-              <p className="recipe-description">{recipe.description}</p>
-              <div className="recipe-tags">
-                {recipe.tags.map((tag, index) => (
-                  <span key={index} className="tag">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <div className="recipe-author">
-                <img src={recipe.author.Ava} alt={recipe.author.name} className="author-avatar" />
-                <span>{recipe.author.name}</span>
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div> */}
-
-      {pagination.pages > 1 && (
-        <div className="pagination">
-          {Array.from({ length: pagination.pages }, (_, i) => (
-            <button
-              key={i + 1}
-              className={`page-button ${pagination.page === i + 1 ? 'active' : ''}`}
-              onClick={() => handlePageChange(i + 1)}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
   );
 }
 

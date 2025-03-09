@@ -12,6 +12,7 @@ import AccountSetting from "./pages/AccountSetting/AccountSetting";
 import SearchResults from "./pages/SearchResult/SearchResult";
 import AddRecipe from "./pages/AddRecipe/AddRecipe";
 import Recipes from "./pages/Recipes/Recipes";
+import SavedRecipes from "./pages/Saved/Saved";
 import ProtectedRoute from "./Component/ProtectedRoute";
 import { initAuth } from "./redux/authSlice";
 
@@ -50,7 +51,10 @@ function App() {
               <AccountSetting />
             </ProtectedRoute>
           } />
+                 
           <Route path="/searchResult" element={<SearchResults />} />
+          <Route path="/saved" element={<SavedRecipes />} />
+
         </Routes>
       </Router>
     </div>
