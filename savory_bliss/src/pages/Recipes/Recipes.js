@@ -88,7 +88,7 @@ function Recipes() {
         ) : filteredRecipes && filteredRecipes.length > 0 ? (
           filteredRecipes.map(recipe => (
             <div key={recipe.id} className="recipe-card">
-              <Link to={`/recipe/${recipe.id}`} className="recipe-link">
+              <Link to={`/recipe/${recipe._id}`} className="recipe-link">
                 <div className="recipe-image">
                   <img src={recipe.imageUrl} alt={recipe.title} />
                 </div>
