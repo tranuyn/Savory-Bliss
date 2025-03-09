@@ -14,11 +14,11 @@ export default function NavigationBar({ user }) {
 
   const handleLogout = async () => {
     try {
-      console.log("Đang đăng xuất...");
+      console.log("Logging out...");
       await dispatch(logoutUser());
       navigate("/");
     } catch (error) {
-      console.error("Lỗi khi đăng xuất:", error);
+      console.error("Logout error:", error);
     }
   };
 
@@ -30,7 +30,7 @@ export default function NavigationBar({ user }) {
           <Navbar.Brand href="/" className="logo-text fw-bold fs-4">
             Savory Bliss
           </Navbar.Brand>
-          <SearchBar href="/SearchResult"/>
+          <SearchBar href="/SearchResult" />
         </Nav>
 
         {/* Navigation Tabs */}
@@ -56,7 +56,8 @@ export default function NavigationBar({ user }) {
         <Nav className="d-flex align-items-center gap-4">
           <Button
             className="normal-button rounded-pill px-3"
-            href="/addrecipe"
+            as={Link}
+            to="/addrecipe"
           >
             <Plus className="fs-3 fw-bold cursor-pointer" /> Add a recipe
           </Button>
@@ -66,7 +67,7 @@ export default function NavigationBar({ user }) {
             <Dropdown align="end">
               <Dropdown.Toggle as="div" className="user-avatar">
                 <img
-                  src={user.avatar}
+                  src={user.Ava}
                   alt="User Avatar"
                   className="rounded-circle cursor-pointer"
                   style={{
@@ -81,7 +82,9 @@ export default function NavigationBar({ user }) {
                 />
               </Dropdown.Toggle>
               <Dropdown.Menu className="dropdown-menu-custom">
-                <Dropdown.Item href="/AccountSetting">User Center</Dropdown.Item>
+                <Dropdown.Item as={Link} to="/AccountSetting">
+                  User Center
+                </Dropdown.Item>
                 <Dropdown.Divider />
                 <Dropdown.Item onClick={handleLogout}>
                   Log Out
