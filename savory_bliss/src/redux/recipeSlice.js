@@ -1,6 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-const API_URL = 'http://localhost:5000/api/recipes';
+const API_URL = process.env.REACT_APP_SERVER_URL 
+  ? `${process.env.REACT_APP_SERVER_URL}/api/recipes` 
+  : `http://localhost:${process.env.REACT_APP_SERVER_PORT || 5000}/api/recipes`;
+
 
 //search recipes
 export const searchRecipes = createAsyncThunk(

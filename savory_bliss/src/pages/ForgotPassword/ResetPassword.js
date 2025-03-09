@@ -11,12 +11,15 @@ const ResetPassword = () => {
   const [tokenValid, setTokenValid] = useState(null);
   const navigate = useNavigate();
   const { token } = useParams(); // Lấy token từ URL parameter
-
+  
+  const API_URL = process.env.REACT_APP_SERVER_URL 
+  ? `${process.env.REACT_APP_SERVER_URL}/auth` 
+  : `http://localhost:${process.env.REACT_APP_SERVER_PORT || 5000}/auth`;
   useEffect(() => {
     // Kiểm tra tính hợp lệ của token khi component được mount
     const verifyToken = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/auth/verify-reset-token/${token}`, {
+        const response = await fetch(`${API_URL}/verify-reset-token/${token}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -66,7 +69,7 @@ const ResetPassword = () => {
     setMessage({ type: "", text: "" });
     
     try {
-      const response = await fetch("http://localhost:5000/auth/reset-password", {
+      const response = await fetch(`${API_URL}/reset-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

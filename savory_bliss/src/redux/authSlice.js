@@ -1,5 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
+const API_URL = process.env.REACT_APP_SERVER_URL 
+  ? `${process.env.REACT_APP_SERVER_URL}/auth` 
+  : `http://localhost:${process.env.REACT_APP_SERVER_PORT || 5000}/auth`;
+
 // Thunk để khởi tạo trạng thái xác thực
 export const initAuth = createAsyncThunk(
   "auth/initAuth",
@@ -13,7 +17,7 @@ export const initAuth = createAsyncThunk(
     if (token) {
       try {
         console.log("Đang xác thực token:", token);
-        const response = await fetch("http://localhost:5000/auth/verify", {
+        const response = await fetch(`${API_URL}/verify`, {
           method: "GET",
           headers: {
             "Authorization": `Bearer ${token}`
@@ -53,7 +57,7 @@ export const registerUser = createAsyncThunk(
   async (userData, { rejectWithValue }) => {
     try {
       console.log("Đang đăng ký với:", userData);
-      const response = await fetch("http://localhost:5000/auth/register", {
+      const response = await fetch(`${API_URL}/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -90,7 +94,7 @@ export const loginUser = createAsyncThunk(
   async (credentials, { rejectWithValue }) => {
     try {
       console.log("Đang đăng nhập với:", credentials);
-      const response = await fetch("http://localhost:5000/auth/login", {
+      const response = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -130,7 +134,7 @@ export const refreshAccessToken = createAsyncThunk(
         throw new Error("Không có refresh token");
       }
 
-      const response = await fetch("http://localhost:5000/auth/refresh", {
+      const response = await fetch(`${API_URL}/refresh`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -171,7 +175,7 @@ export const forgotPassword = createAsyncThunk(
   async (email, { rejectWithValue }) => {
     try {
       const response = await fetch(
-        "http://localhost:5000/auth/forgotPassword",
+        `${API_URL}/forgotPassword`,
         {
           method: "POST",
           headers: {
@@ -200,7 +204,7 @@ export const resetPassword = createAsyncThunk(
   async ({ userId, currentPassword, newPassword }, { rejectWithValue }) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/auth/resetPassword/${userId}`,
+        `${API_URL}/resetPassword/${userId}`,
         {
           method: "PATCH",
           headers: {
@@ -229,7 +233,7 @@ export const updateProfile = createAsyncThunk(
   async ({userId, profileData }, { rejectWithValue }) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/auth/updateProfile/${userId}`,
+        `${API_URL}/updateProfile/${userId}`,
         {
           method: "PUT",
           headers: {
