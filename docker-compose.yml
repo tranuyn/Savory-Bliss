@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  app:
+    build: 
+      context: ./savory_bliss
+      args:
+        - SERVER_PORT=${SERVER_PORT}
+        - SERVER_URL=${SERVER_URL}
+    ports:
+      - "3000:3000"
+    environment:
+      - SERVER_PORT=${SERVER_PORT}
+      - SERVER_URL=${SERVER_URL}
+    depends_on:
+      - server
+
+  server:
+    build: 
+      context: ./server
+      args:
+        - SERVER_PORT=${SERVER_PORT}
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    environment:
+      - SERVER_PORT=${SERVER_PORT}
