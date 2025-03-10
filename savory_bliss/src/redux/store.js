@@ -13,11 +13,13 @@ import {
 } from "redux-persist";
 import authReducer from "./authSlice";
 import recipeReducer from "./recipeSlice";
+import commentReducer from './commentSlice'; 
 
 // Kết hợp tất cả reducers
 const rootReducer = combineReducers({
   auths: authReducer,
   recipes: recipeReducer,
+  comments: commentReducer
 });
 
 // Cấu hình persist

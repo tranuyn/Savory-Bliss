@@ -2,22 +2,93 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchRecipeById } from "../../redux/recipeSlice";
+import { 
+  fetchCommentsByRecipe, 
+  createComment, 
+  updateComment, 
+  deleteComment, 
+  addReply,
+  toggleLike,
+  setActiveComment,
+  clearActiveComment
+} from "../../redux/commentSlice";
 import "./RecipeDetail.css";
 
 function RecipeDetail() {
   const { id } = useParams();
   const dispatch = useDispatch();
   const { currentRecipe, isFetching, relatedRecipes } = useSelector(state => state.recipes);
+  const { comments, isLoading, commentCount, activeComment } = useSelector(state => state.comments);
+  const { user } = useSelector(state => state.auths);
   const [activeTab, setActiveTab] = useState("ingredients");
+  const [commentContent, setCommentContent] = useState("");
+  const [editContent, setEditContent] = useState("");
 
   useEffect(() => {
     if (id) {
       dispatch(fetchRecipeById(id));
+      dispatch(fetchCommentsByRecipe(id));
     }
   }, [dispatch, id]);
 
-  if (isFetching) {
-    return <div className="loading">Loading recipe...</div>;
+  const handleCommentSubmit = (e) => {
+    e.preventDefault();
+    if (!commentContent.trim()) return;
+    
+    dispatch(createComment({ recipeId: id, content: commentContent }))
+      .then(() => setCommentContent(""));
+  };
+
+  const handleEditComment = (commentId) => {
+    const comment = comments.find(c => c._id === commentId);
+    if (comment) {
+      setEditContent(comment.content);
+      dispatch(setActiveComment({ id: commentId, type: 'editing' }));
+    }
+  };
+
+  const handleUpdateComment = (commentId) => {
+    if (!editContent.trim()) return;
+    
+    dispatch(updateComment({ commentId, content: editContent }))
+      .then(() => {
+        setEditContent("");
+        dispatch(clearActiveComment());
+      });
+  };
+
+  const handleDeleteComment = (commentId) => {
+    if (window.confirm('Bạn có chắc muốn xóa bình luận này?')) {
+      dispatch(deleteComment(commentId));
+    }
+  };
+
+  const handleReply = (commentId) => {
+    dispatch(setActiveComment({ id: commentId, type: 'replying' }));
+    setEditContent("");
+  };
+
+  const handleSubmitReply = (commentId) => {
+    if (!editContent.trim()) return;
+    
+    dispatch(addReply({ commentId, content: editContent }))
+      .then(() => {
+        setEditContent("");
+        dispatch(clearActiveComment());
+      });
+  };
+
+  const handleLikeComment = (commentId) => {
+    dispatch(toggleLike(commentId));
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('vi-VN');
+  };
+
+  if (isFetching || isLoading) {
+    return <div className="loading">Loading recipe and comments...</div>;
   }
 
   if (!currentRecipe) {
@@ -81,61 +152,125 @@ function RecipeDetail() {
           </div>
 
           <div className="recipe-comments">
-            <h3 className="comments-title">Comments (456)</h3>
+            <h3 className="comments-title">Comments ({commentCount})</h3>
             
             {/* Comment input area */}
-            <div className="comment-input-area">
-              <div className="comment-avatar">
-                <img src="/default-avatar.png" alt="User avatar" />
+            {user ? (
+              <form onSubmit={handleCommentSubmit} className="comment-input-area">
+                <div className="comment-avatar">
+                  <img src={user.avatar || "/default-avatar.png"} alt="User avatar" />
+                </div>
+                <input 
+                  type="text" 
+                  className="comment-input" 
+                  placeholder="Give this recipe a comment..." 
+                  value={commentContent}
+                  onChange={(e) => setCommentContent(e.target.value)}
+                />
+                <button type="submit" className="comment-submit-btn">Gửi</button>
+              </form>
+            ) : (
+              <div className="login-to-comment">
+                <Link to="/login">Đăng nhập</Link> để bình luận
               </div>
-              <input 
-                type="text" 
-                className="comment-input" 
-                placeholder="Give this recipe a comment..." 
-              />
-            </div>
+            )}
             
             {/* Comment items */}
-            <div className="comment-item">
-              <div className="comment-avatar">
-                <img src="/default-avatar.png" alt="User avatar" />
-              </div>
-              <div className="comment-content">
-                <div className="comment-header">
-                  <span className="comment-author">Account_name</span>
-                  <span className="comment-date">11/12/2024 11:00PM</span>
+            {comments.map(comment => (
+              <div key={comment._id} className="comment-item">
+                <div className="comment-avatar">
+                  <img src={comment.user?.avatar || "/default-avatar.png"} alt="User avatar" />
                 </div>
-                <p className="comment-text">Bình luận nè Bình luận nè Bình luận nề Bình luận nè Bình luận nè Bình luận nẻ Bình luận nè Bình luận ne Bình luận ne Bình luận nè Bình luận ne Bình luận ne Bình luận ne Bình luận ne</p>
-              </div>
-            </div>
-            
-            <div className="comment-item">
-              <div className="comment-avatar">
-                <img src="/default-avatar.png" alt="User avatar" />
-              </div>
-              <div className="comment-content">
-                <div className="comment-header">
-                  <span className="comment-author">Account_name</span>
-                  <span className="comment-date">11/12/2024 11:00PM</span>
+                <div className="comment-content">
+                  <div className="comment-header">
+                    <span className="comment-author">{comment.user?.name || "Anonymous"}</span>
+                    <span className="comment-date">{formatDate(comment.createdAt)}</span>
+                  </div>
+                  
+                  {activeComment?.id === comment._id && activeComment?.type === 'editing' ? (
+                    <div className="edit-comment-form">
+                      <textarea
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        className="edit-comment-input"
+                      />
+                      <div className="edit-comment-actions">
+                        <button onClick={() => handleUpdateComment(comment._id)}>Lưu</button>
+                        <button onClick={() => dispatch(clearActiveComment())}>Hủy</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="comment-text">{comment.content}</p>
+                  )}
+                  
+                  <div className="comment-actions">
+                    <button 
+                      className={`like-btn ${comment.likes?.includes(user?._id) ? 'liked' : ''}`}
+                      onClick={() => handleLikeComment(comment._id)}
+                    >
+                      ❤️ {comment.likes?.length || 0}
+                    </button>
+                    
+                    {user && (
+                      <>
+                        <button onClick={() => handleReply(comment._id)}>Trả lời</button>
+                        {comment.user?._id === user._id && (
+                          <>
+                            <button onClick={() => handleEditComment(comment._id)}>Sửa</button>
+                            <button onClick={() => handleDeleteComment(comment._id)}>Xóa</button>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Reply form */}
+                  {activeComment?.id === comment._id && activeComment?.type === 'replying' && (
+                    <div className="reply-form">
+                      <textarea
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        placeholder="Viết trả lời..."
+                        className="reply-input"
+                      />
+                      <div className="reply-actions">
+                        <button onClick={() => handleSubmitReply(comment._id)}>Gửi</button>
+                        <button onClick={() => dispatch(clearActiveComment())}>Hủy</button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Replies */}
+                  {comment.replies && comment.replies.length > 0 && (
+                    <div className="comment-replies">
+                      {comment.replies.map(reply => (
+                        <div key={reply._id} className="reply-item">
+                          <div className="reply-avatar">
+                            <img src={reply.user?.avatar || "/default-avatar.png"} alt="User avatar" />
+                          </div>
+                          <div className="reply-content">
+                            <div className="reply-header">
+                              <span className="reply-author">{reply.user?.name || "Anonymous"}</span>
+                              <span className="reply-date">{formatDate(reply.createdAt)}</span>
+                            </div>
+                            <p className="reply-text">{reply.content}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <p className="comment-text">Bình luận nề Bình luận nè Bình luận nề Bình luận nè Bình luận nè Bình luận nề Bình luận nè Bình luận nè Bình luận nè Bình luận nè Bình luận nè Bình luận nè Bình luận nề Bình luận nè</p>
               </div>
-            </div>
+            ))}
             
-            <div className="comment-item">
-              <div className="comment-avatar">
-                <img src="/default-avatar.png" alt="User avatar" />
-              </div>
-              <div className="comment-content">
-                <div className="comment-header">
-                  <span className="comment-author">Account_name</span>
-                  <span className="comment-date">11/12/2024 11:00PM</span>
-                </div>
-                <p className="comment-text">Bình luận nè Bình luận nè Bình luận nè Bình luận nề Bình luận nè Bình luận nè Bình luận nè Bình luận nè Bình luận nề Bình luận ne Bình luận nề Bình luận ne Bình luận nề Bình luận nè</p>
-              </div>
-            </div>
-            
-            <button className="more-comments-btn">More comments...</button>
+            {comments.length < commentCount && (
+              <button 
+                className="more-comments-btn"
+                onClick={() => dispatch(fetchCommentsByRecipe(id, { page: Math.ceil(comments.length / 10) + 1 }))}
+              >
+                Xem thêm bình luận...
+              </button>
+            )}
           </div>
         </div>
       </div>

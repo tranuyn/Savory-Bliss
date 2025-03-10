@@ -29,7 +29,7 @@ function Recipes() {
   );
   
   const handleAddRecipe = () => {
-    navigate('/add-recipe');
+    navigate('/addrecipe');
   };
 
   const handleAccountSettings = () => {
