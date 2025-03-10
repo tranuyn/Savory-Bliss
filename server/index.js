@@ -38,6 +38,7 @@ if (!fs.existsSync(uploadsDir)) {
 // Import routes
 const authRoutes = require("./routes/auth");
 const recipeRoutes = require("./routes/recipe");
+const commentRoutes = require('./routes/comment');
 
 // Basic route
 app.get("/", (req, res) => {
@@ -47,6 +48,7 @@ app.get("/", (req, res) => {
 // Apply routes
 app.use("/auth", authRoutes);
 app.use("/api/recipes", recipeRoutes);
+app.use('/api/comments', commentRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

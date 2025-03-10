@@ -21,6 +21,18 @@ const RecipeSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  favorites: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  commentsCount: {
+    type: Number,
+    default: 0
+  },
+  views: {
+    type: Number,
+    default: 0
+  },
   createdAt: {
     type: Date,
     default: Date.now

@@ -1,4 +1,5 @@
 const Recipe = require('../models/Recipe');
+const Comment = require('../models/Comment');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
@@ -131,14 +132,29 @@ exports.getAllRecipes = async (req, res) => {
 
 exports.getRecipeById = async (req, res) => {
   try {
-    const recipe = await Recipe.findById(req.params.id)
-      .populate('author', 'username');
+    const recipeId = req.params.id;
+    
+    // Tăng view count
+    await Recipe.findByIdAndUpdate(recipeId, { $inc: { views: 1 } });
+    
+    // Tìm recipe và cập nhật commentsCount
+    const recipe = await Recipe.findById(recipeId)
+      .populate('author', 'username name avatar');
 
     if (!recipe) {
       return res.status(404).json({
         success: false,
         message: 'Recipe not found'
       });
+    }
+    
+    // Đếm số lượng comment cho recipe này
+    const commentsCount = await Comment.countDocuments({ recipe: recipeId });
+    
+    // Cập nhật commentsCount nếu khác với giá trị hiện tại
+    if (recipe.commentsCount !== commentsCount) {
+      recipe.commentsCount = commentsCount;
+      await recipe.save();
     }
 
     res.status(200).json({
