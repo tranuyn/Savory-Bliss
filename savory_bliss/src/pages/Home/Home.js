@@ -61,6 +61,15 @@ function Home() {
                       </div>
                     </div>
                   </Link>
+                  <div className="recipe-actions">
+                    <button className="save-btn">
+                      <i className="save-icon">🔖</i>
+                    </button>
+                    <div className="stats">
+                      <span className="likes"><i className="heart-icon">❤️</i> {recipe.likes}</span>
+                      <span className="views"><i className="view-icon">👁️</i> {recipe.views}</span>
+                    </div>
+                  </div>
                 </div>
               ))
             ) : (

@@ -263,6 +263,64 @@ export const deleteRecipe = createAsyncThunk(
   }
 );
 
+// Thunk để lưu/bỏ lưu công thức
+export const toggleSaveRecipe = createAsyncThunk(
+  'recipes/toggleSaveRecipe',
+  async (id, { rejectWithValue, getState }) => {
+    try {
+      const { auths } = getState();
+      const token = auths.token;
+
+      const response = await fetch(`${API_URL}/${id}/save`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Không thể lưu công thức');
+      }
+
+      const data = await response.json();
+      return { id, isSaved: data.isSaved };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+
+// Thunk để lấy danh sách công thức đã lưu
+export const fetchSavedRecipes = createAsyncThunk(
+  'recipes/saved',
+  async (_, { rejectWithValue, getState }) => {
+    try {
+      const { auths } = getState();
+      const token = auths.token;
+
+      const response = await fetch(`${API_URL}/saved`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Không thể lấy danh sách công thức đã lưu');
+      }
+
+      const data = await response.json();
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const recipeSlice = createSlice({
   name: 'recipes',
   initialState: {
@@ -415,7 +473,48 @@ const recipeSlice = createSlice({
         state.isDeleting = false;
         state.success = false;
         state.error = action.payload;
-      });
+      })
+
+      // Xử lý toggleSaveRecipe
+      .addCase(toggleSaveRecipe.pending, (state) => {
+        state.isSaving = true;
+        state.error = null;
+      })
+      .addCase(toggleSaveRecipe.fulfilled, (state, action) => {
+        state.isSaving = false;
+        
+        // Cập nhật currentRecipe nếu đang xem chi tiết
+        if (state.currentRecipe && state.currentRecipe._id === action.payload.id) {
+          state.currentRecipe.isSaved = action.payload.isSaved;
+        }
+        
+        // Cập nhật danh sách recipes
+        if (state.recipes.length > 0) {
+          const recipeIndex = state.recipes.findIndex(r => r._id === action.payload.id);
+          if (recipeIndex !== -1) {
+            state.recipes[recipeIndex].isSaved = action.payload.isSaved;
+          }
+        }
+      })
+      .addCase(toggleSaveRecipe.rejected, (state, action) => {
+        state.isSaving = false;
+        state.error = action.payload;
+      })
+
+      // Xử lý fetchSavedRecipes
+      .addCase(fetchSavedRecipes.pending, (state) => {
+        state.isFetching = true;
+        state.error = null;
+      })
+      .addCase(fetchSavedRecipes.fulfilled, (state, action) => {
+        state.isFetching = false;
+        state.savedRecipes = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchSavedRecipes.rejected, (state, action) => {
+        state.isFetching = false;
+        state.error = action.payload;
+      })
   }
 });
 

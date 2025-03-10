@@ -440,3 +440,91 @@ exports.getFavoriteRecipes = async (req, res) => {
     });
   }
 };
+
+exports.toggleSaveRecipe = async (req, res) => {
+  try {
+    const recipeId = req.params.id;
+    const userId = req.user._id;
+
+    // Tìm recipe
+    const recipe = await Recipe.findById(recipeId);
+    if (!recipe) {
+      return res.status(404).json({
+        success: false,
+        message: 'Recipe not found'
+      });
+    }
+
+    // Tìm user để cập nhật danh sách bài viết đã lưu
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Kiểm tra xem người dùng đã lưu công thức này chưa
+    const isSaved = user.savedRecipes && user.savedRecipes.includes(recipeId);
+
+    if (isSaved) {
+      // Nếu đã lưu, bỏ lưu
+      user.savedRecipes = user.savedRecipes.filter(
+        savedRecipeId => savedRecipeId.toString() !== recipeId.toString()
+      );
+    } else {
+      // Nếu chưa lưu, thêm vào danh sách đã lưu
+      if (!user.savedRecipes) {
+        user.savedRecipes = [];
+      }
+      user.savedRecipes.push(recipeId);
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      isSaved: !isSaved,
+      savedRecipesCount: user.savedRecipes.length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+exports.getSavedRecipes = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    // Tìm user và populate savedRecipes
+    const user = await User.findById(userId).populate({
+      path: 'savedRecipes',
+      populate: {
+        path: 'author',
+        select: 'username Ava'
+      }
+    });
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: user.savedRecipes
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};

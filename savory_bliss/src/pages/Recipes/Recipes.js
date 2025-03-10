@@ -40,7 +40,7 @@ function Recipes() {
     <div className="recipes-container">
       <div className="user-profile-section">
         <div className="profile-content">
-          <div className="profile-avatar">
+          <div className="profile-ava">
             <img src={user?.avatar || "/default-avatar.png"} alt="User avatar" />
           </div>
           <div className="profile-info">
