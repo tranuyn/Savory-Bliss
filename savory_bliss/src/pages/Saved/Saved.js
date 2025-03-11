@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchFavoriteRecipes, toggleFavorite } from "../../redux/recipeSlice";
@@ -11,6 +11,12 @@ function SavedRecipes() {
     const { favoriteRecipes = [], isFetching, error } = useSelector(state => state.recipes);
     const { user } = useSelector(state => state.auths);
     const [searchQuery, setSearchQuery] = useState("");
+    const [filterSettings, setFilterSettings] = useState({
+        dateFilter: { from: '', to: '' },
+        likesSort: 'descending',
+        viewsSort: 'descending',
+        activeSort: 'likes'
+    });
 
     useEffect(() => {
         // Kiểm tra nếu đã đăng nhập mới fetch danh sách yêu thích
@@ -34,14 +40,51 @@ function SavedRecipes() {
         } else {
             alert("Vui lòng đăng nhập để thực hiện thao tác này");
         }
+        window.location.reload();
     };
 
-    // Make sure favoriteRecipes is an array before filtering
-    const filteredRecipes = Array.isArray(favoriteRecipes) 
-        ? favoriteRecipes.filter(recipe =>
+    // Sử dụng useCallback để tránh tạo lại hàm mỗi khi component re-render
+    const handleFilterChange = useCallback((newFilterSettings) => {
+        setFilterSettings(newFilterSettings);
+    }, []);
+
+    // Sử dụng useMemo để tối ưu hóa việc lọc và sắp xếp
+    const filteredAndSortedRecipes = useMemo(() => {
+        if (!Array.isArray(favoriteRecipes)) return [];
+        
+        // Bước 1: Lọc theo từ khóa tìm kiếm
+        let tempRecipes = favoriteRecipes.filter(recipe =>
             recipe?.title?.toLowerCase().includes(searchQuery.toLowerCase())
-          )
-        : [];
+        );
+        
+        // Bước 2: Lọc theo ngày nếu có
+        if (filterSettings.dateFilter.from || filterSettings.dateFilter.to) {
+            const fromDate = filterSettings.dateFilter.from ? new Date(filterSettings.dateFilter.from) : new Date(0);
+            const toDate = filterSettings.dateFilter.to ? new Date(filterSettings.dateFilter.to) : new Date();
+            
+            tempRecipes = tempRecipes.filter(recipe => {
+                const recipeDate = new Date(recipe.createdAt || Date.now()); // Fallback if no date
+                return recipeDate >= fromDate && recipeDate <= toDate;
+            });
+        }
+        
+        // Bước 3: Sắp xếp theo tiêu chí đã chọn
+        if (filterSettings.activeSort === 'likes') {
+            tempRecipes = [...tempRecipes].sort((a, b) => {
+                const aLikes = a.likes?.length || 0;
+                const bLikes = b.likes?.length || 0;
+                return filterSettings.likesSort === 'ascending' ? aLikes - bLikes : bLikes - aLikes;
+            });
+        } else if (filterSettings.activeSort === 'views') {
+            tempRecipes = [...tempRecipes].sort((a, b) => {
+                const aViews = a.views || 0;
+                const bViews = b.views || 0;
+                return filterSettings.viewsSort === 'ascending' ? aViews - bViews : bViews - aViews;
+            });
+        }
+        
+        return tempRecipes;
+    }, [favoriteRecipes, searchQuery, filterSettings]);
 
     return (
         <div className="home-container">
@@ -67,8 +110,8 @@ function SavedRecipes() {
                             <div className="loading">Loading recipes...</div>
                         ) : error ? (
                             <div className="error">Failed to load recipes: {error}</div>
-                        ) : filteredRecipes.length > 0 ? (
-                            filteredRecipes.map(recipe => (
+                        ) : filteredAndSortedRecipes.length > 0 ? (
+                            filteredAndSortedRecipes.map(recipe => (
                                 <div key={recipe._id} className="recipe-card">
                                     <Link to={`/recipe/${recipe._id}`} className="recipe-link">
                                         <div className="recipe-image">
@@ -120,7 +163,7 @@ function SavedRecipes() {
 
                 {/* Sidebar - Filter and Sort */}
                 <div className="sidebar">
-                    <FilterAndSort />
+                    <FilterAndSort onFilterChange={handleFilterChange} />
                 </div>
             </div>
         </div>

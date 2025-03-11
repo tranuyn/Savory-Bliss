@@ -327,20 +327,6 @@ function RecipeDetail() {
                 <div className="more-recipe-image">
                   <img src={recipe.imageUrl} alt={recipe.title} />
                   {/* Nút yêu thích trên các công thức liên quan */}
-                  <button 
-                    className={`favorite-btn-card ${recipe.isFavorited ? 'favorited' : ''}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (user) {
-                        dispatch(toggleFavorite(recipe._id));
-                      } else {
-                        alert("Vui lòng đăng nhập để lưu công thức vào danh sách yêu thích");
-                      }
-                    }}
-                  >
-                    {recipe.isFavorited ? '⭐' : '☆'}
-                  </button>
                 </div>
                 <div className="more-recipe-info">
                   <h4 className="more-recipe-title">
@@ -356,7 +342,7 @@ function RecipeDetail() {
                         <i className="like-icon">❤️</i> {recipe.likes?.length || 0}
                       </span>
                       <span className="recipe-favorites">
-                        <i className="favorite-icon">⭐</i> {recipe.favoritesCount || 0}
+                        <i className="favorite-icon">⭐</i> {recipe.favorites?.length || 0}
                       </span>
                       <span className="recipe-views">
                         <i className="view-icon">👁️</i> {recipe.views || 0}
