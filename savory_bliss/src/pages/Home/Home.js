@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { fetchRecipes } from "../../redux/recipeSlice";
+import { fetchRecipes, toggleSaveRecipe } from "../../redux/recipeSlice";
 import FilterAndSort from "../../Component/FilterAndSort";
 import "./Home.css";
 
@@ -10,7 +10,8 @@ function Home() {
   const navigate = useNavigate();
 
   // Lấy state từ Redux
-  const { recipes, isFetching } = useSelector(state => state.recipes);
+  const { user } = useSelector(state => state.auths);
+  const { recipes, isFetching, savedRecipes } = useSelector(state => state.recipes);
 
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -22,6 +23,23 @@ function Home() {
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
   };
+
+  const handleSaveRecipe = async (e, recipeId) => {
+    e.preventDefault(); // Prevent link navigation
+
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      await dispatch(toggleSaveRecipe(recipeId)).unwrap();
+    } catch (error) {
+      console.error('Error saving recipe:', error);
+      // You can add toast notification here
+    }
+  };
+
 
   const filteredRecipes = recipes && recipes.filter(recipe =>
     recipe.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -61,6 +79,20 @@ function Home() {
                       </div>
                     </div>
                   </Link>
+                  <div className="recipe-actions">
+                    <button
+                      className={`save-btn ${savedRecipes?.includes(recipe._id) ? 'saved' : ''}`}
+                      onClick={(e) => handleSaveRecipe(e, recipe._id)}
+                    >
+                      <i className="save-icon">
+                        {savedRecipes?.includes(recipe._id) ? '📑' : '🔖'}
+                      </i>
+                    </button>
+                    <div className="stats">
+                      <span className="likes"><i className="heart-icon">❤️</i> {recipe.likes}</span>
+                      <span className="views"><i className="view-icon">👁️</i> {recipe.views}</span>
+                    </div>
+                  </div>
                 </div>
               ))
             ) : (

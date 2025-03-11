@@ -1,5 +1,7 @@
+const mongoose = require("mongoose");
 const Recipe = require('../models/Recipe');
 const Comment = require('../models/Comment');
+const User = require('../models/User');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
@@ -133,10 +135,10 @@ exports.getAllRecipes = async (req, res) => {
 exports.getRecipeById = async (req, res) => {
   try {
     const recipeId = req.params.id;
-    
+
     // Tăng view count
     await Recipe.findByIdAndUpdate(recipeId, { $inc: { views: 1 } });
-    
+
     // Tìm recipe và cập nhật commentsCount
     const recipe = await Recipe.findById(recipeId)
       .populate('author', 'username name avatar');
@@ -147,10 +149,10 @@ exports.getRecipeById = async (req, res) => {
         message: 'Recipe not found'
       });
     }
-    
+
     // Đếm số lượng comment cho recipe này
     const commentsCount = await Comment.countDocuments({ recipe: recipeId });
-    
+
     // Cập nhật commentsCount nếu khác với giá trị hiện tại
     if (recipe.commentsCount !== commentsCount) {
       recipe.commentsCount = commentsCount;
@@ -277,35 +279,77 @@ exports.updateRecipe = async (req, res) => {
 
 exports.deleteRecipe = async (req, res) => {
   try {
-    const recipe = await Recipe.findById(req.params.id);
+    const recipeId = req.params.id;
+    const userId = req.user?._id; // Đảm bảo req.user tồn tại
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized. Please log in.",
+      });
+    }
+
+    // Kiểm tra xem recipeId có phải ObjectId hợp lệ không
+    if (!mongoose.Types.ObjectId.isValid(recipeId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid recipe ID format",
+      });
+    }
+
+    console.log("Starting save recipe process:", { recipeId, userId });
+
+    // Tìm User và Recipe cùng lúc để tối ưu hiệu suất
+    const [recipe, user] = await Promise.all([
+      Recipe.findById(recipeId),
+      User.findById(userId),
+    ]);
 
     if (!recipe) {
       return res.status(404).json({
         success: false,
-        message: 'Recipe not found'
+        message: "Recipe not found",
       });
     }
 
-    // Kiểm tra quyền sở hữu
-    if (recipe.author.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
+    if (!user) {
+      return res.status(404).json({
         success: false,
-        message: 'Not authorized to delete this recipe'
+        message: "User not found",
       });
     }
 
-    // Sử dụng deleteOne thay vì remove
-    await Recipe.deleteOne({ _id: req.params.id });
+    // Kiểm tra xem recipe có được lưu chưa
+    const isRecipeSaved = user.savedRecipes.some(
+      (id) => id.toString() === recipeId.toString()
+    );
+
+    if (isRecipeSaved) {
+      // Nếu đã lưu, thì xóa khỏi danh sách
+      user.savedRecipes = user.savedRecipes.filter(
+        (id) => id.toString() !== recipeId.toString()
+      );
+      console.log("Recipe removed from saved list");
+    } else {
+      // Nếu chưa lưu, thêm vào danh sách
+      user.savedRecipes.push(recipeId);
+      console.log("Recipe added to saved list");
+    }
+
+    // Lưu thay đổi vào database
+    await user.save();
 
     res.status(200).json({
       success: true,
-      data: {}
+      isSaved: !isRecipeSaved,
+      savedRecipes: user.savedRecipes, // Trả về danh sách savedRecipes mới
     });
   } catch (error) {
+    console.error("Save recipe error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error',
-      error: error.message
+      message: "Error saving recipe",
+      error: error.message,
     });
   }
 };
@@ -335,12 +379,12 @@ exports.getRecipesByUser = async (req, res) => {
 exports.searchRecipes = async (req, res) => {
   try {
     const { query, page = 1, limit = 10 } = req.query;
-    
+
     console.log('Backend received search params:', { query, page, limit });
 
     // Build search query for title only
     let searchQuery = {};
-    
+
     if (query) {
       const searchRegex = new RegExp(query.trim(), 'i');
       searchQuery = {
@@ -514,6 +558,146 @@ exports.toggleLike = async (req, res) => {
     return res.status(500).json({ 
       success: false, 
       message: "Server error",
+      error: error.message
+    });
+  }
+};
+
+exports.toggleSaveRecipe = async (req, res) => {
+  try {
+    const recipeId = req.params.id;
+    const userId = req.user._id;
+
+    console.log("Starting save recipe process:", { recipeId, userId });
+
+    // Validate recipe ID
+    if (!mongoose.Types.ObjectId.isValid(recipeId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid recipe ID format'
+      });
+    }
+
+    // Find recipe and user concurrently
+    const [recipe, user] = await Promise.all([
+      Recipe.findById(recipeId),
+      User.findById(userId)
+    ]);
+
+    // Check recipe exists
+    if (!recipe) {
+      console.log("Recipe not found:", recipeId);
+      return res.status(404).json({
+        success: false,
+        message: 'Recipe not found'
+      });
+    }
+
+    // Check user exists
+    if (!user) {
+      console.log("User not found:", userId);
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Initialize savedRecipes if needed
+    if (!user.savedRecipes) {
+      user.savedRecipes = [];
+    }
+
+    // Convert IDs to strings for comparison
+    const savedRecipeIds = user.savedRecipes.map(id => id.toString());
+    const isRecipeSaved = savedRecipeIds.includes(recipeId.toString());
+
+    console.log("Current save status:", { isRecipeSaved });
+
+    if (isRecipeSaved) {
+      // Remove recipe from saved list
+      user.savedRecipes = user.savedRecipes.filter(
+        id => id.toString() !== recipeId.toString()
+      );
+      console.log("Removed recipe from saved list");
+    } else {
+      // Add recipe to saved list
+      user.savedRecipes.push(recipeId);
+      console.log("Added recipe to saved list");
+    }
+
+    await user.save();
+    console.log("User document saved successfully");
+
+    res.status(200).json({
+      success: true,
+      isSaved: !isRecipeSaved,
+      savedRecipes: user.savedRecipes
+    });
+
+  } catch (error) {
+    console.error('Save recipe error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      message: 'Error saving recipe',
+      error: error.message
+    });
+  }
+};
+
+exports.getSavedRecipes = async (req, res) => {
+  try {
+    // Check if user exists in request
+    if (!req.user) {
+      console.log('No user found in request');
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const userId = req.user._id;
+    console.log("Fetching saved recipes for user:", userId);
+
+    // Find the user and populate saved recipes
+    const user = await User.findById(userId);
+
+    if (!user) {
+      console.log("User not found:", userId);
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Handle case where savedRecipes might be undefined
+    if (!user.savedRecipes || user.savedRecipes.length === 0) {
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        data: []
+      });
+    }
+
+    // Get the saved recipes with full details including author
+    const savedRecipes = await Recipe.find({
+      _id: { $in: user.savedRecipes }
+    }).populate('author', 'username name Ava');
+
+    console.log(`Found ${savedRecipes.length} saved recipes`);
+
+    res.status(200).json({
+      success: true,
+      count: savedRecipes.length,
+      data: savedRecipes
+    });
+
+  } catch (error) {
+    console.error('Get saved recipes error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      message: 'Error retrieving saved recipes',
       error: error.message
     });
   }
