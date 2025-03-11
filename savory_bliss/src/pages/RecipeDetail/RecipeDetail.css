@@ -79,6 +79,8 @@
   
   .recipe-section {
     margin-bottom: 30px;
+    background-color: "transparent";
+    border: 0;
   }
   
   .section-title {
@@ -121,7 +123,7 @@
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     padding: 0;
   }
   
@@ -186,7 +188,7 @@
   
   .comment-header {
     display: flex;
-    justify-content: space-between;
+    /* justify-content: space-between; */
     align-items: center;
     margin-bottom: 5px;
   }
@@ -195,11 +197,14 @@
     font-weight: bold;
     color: #333;
     font-size: 14px;
+    text-align: left;
+    padding-right: 10px;
   }
   
   .comment-date {
     color: #999;
     font-size: 12px;
+    text-align: left;
   }
   
   .comment-text {
@@ -207,6 +212,12 @@
     line-height: 1.5;
     margin: 0;
     font-size: 14px;
+    text-align: left;
+  }
+
+  .comment-actions{
+    display: flex;
+    
   }
   
   .more-comments-btn {
