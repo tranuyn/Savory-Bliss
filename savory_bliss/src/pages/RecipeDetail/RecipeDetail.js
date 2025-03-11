@@ -159,7 +159,7 @@ function RecipeDetail() {
 
           {currentRecipe.sections && currentRecipe.sections.map((section, index) => (
             <div key={index} className="recipe-section">
-              <h2 className="section-title">Bước {index + 1}: {section.title}</h2>
+              <h2 className="section-title">{section.title}</h2>
               <p className="section-content">{section.content}</p>
               {section.imageUrl && (
                 <img 
