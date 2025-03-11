@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import { fetchUserRecipes } from "../../redux/recipeSlice";
+import { fetchUserRecipes, deleteRecipe } from "../../redux/recipeSlice";
 import "./Recipes.css";
 
 function Recipes() {
@@ -9,10 +9,11 @@ function Recipes() {
   const navigate = useNavigate();
   
   // Lấy state từ Redux
-  const { recipes, isFetching } = useSelector(state => state.recipes);
+  const { recipes, isFetching, isDeleting } = useSelector(state => state.recipes);
   const { user } = useSelector(state => state.auths);
   
   const [searchQuery, setSearchQuery] = useState("");
+  const [showConfirmDelete, setShowConfirmDelete] = useState(null);
   
   useEffect(() => {
     if (user && user.id) {
@@ -32,6 +33,24 @@ function Recipes() {
     navigate('/addrecipe');
   };
 
+  const handleEditRecipe = (recipeId) => {
+    navigate(`/editrecipe/${recipeId}`);
+  };
+
+  const handleDeleteConfirm = (recipeId) => {
+    setShowConfirmDelete(recipeId);
+  };
+
+  const handleDeleteCancel = () => {
+    setShowConfirmDelete(null);
+  };
+
+  const handleDeleteRecipe = (recipeId) => {
+    dispatch(deleteRecipe(recipeId)).then(() => {
+      setShowConfirmDelete(null);
+    });
+  };
+
   const handleAccountSettings = () => {
     navigate('/accountSetting');
   }
@@ -47,9 +66,6 @@ function Recipes() {
             <h2 className="profile-name">{user?.name || "Anne the Hungry"}</h2>
             <p className="profile-title">{user?.email || "@hungry_panda"}</p>
             <p className="profile-description">{user?.bio || "Day là profile.Day là profile.Day là profile.Day là profile.Day là profile.Day là profile.Day là profile."}</p>
-            {/* <a href={user?.website || "https://hungryanne.com"} className="profile-website" target="_blank" rel="noopener noreferrer">
-              {user?.website || "hungryanne.com"}
-            </a> */}
             <div className="profile-stats">
               <span className="stats-item">{user?.followers || 255} Recipes</span>
               <span className="stats-item">{user?.likes || 1.5}k Likes</span>
@@ -86,7 +102,7 @@ function Recipes() {
           <div className="loading">Loading recipes...</div>
         ) : filteredRecipes && filteredRecipes.length > 0 ? (
           filteredRecipes.map(recipe => (
-            <div key={recipe.id} className="recipe-card">
+            <div key={recipe.id || recipe._id} className="recipe-card">
               <Link to={`/recipe/${recipe._id}`} className="recipe-link">
                 <div className="recipe-image">
                   <img src={recipe.imageUrl} alt={recipe.title} />
@@ -96,19 +112,57 @@ function Recipes() {
                   <p className="recipe-date">{recipe.createdAt}</p>
                   <p className="recipe-description">{recipe.description}</p>
                   <div className="recipe-author">
-                    <span className="author-name">{recipe.author.username}</span>
+                    <span className="author-name">{recipe.author?.username}</span>
                   </div>
                 </div>
               </Link>
               <div className="recipe-actions">
-                <button className="save-btn">
-                  <i className="save-icon">🔖</i>
-                </button>
                 <div className="stats">
-                  <span className="likes"><i className="heart-icon">❤️</i> {recipe.likes}</span>
-                  <span className="views"><i className="view-icon">👁️</i> {recipe.views}</span>
+                  <span className="views"><i className="view-icon">👁️</i> {recipe.views || 0}</span>
+                </div>
+                <div className="recipe-management">
+                  <button 
+                    className="recipe-edit-btn" 
+                    onClick={() => handleEditRecipe(recipe._id)}
+                    title="Edit recipe"
+                  >
+                    <i className="edit-icon">✎</i>
+                  </button>
+                  <button 
+                    className="recipe-delete-btn" 
+                    onClick={() => handleDeleteConfirm(recipe._id)}
+                    title="Delete recipe"
+                  >
+                    <i className="delete-icon">🗑️</i>
+                  </button>
                 </div>
               </div>
+              
+              {showConfirmDelete === recipe._id && (
+                <div className="delete-confirm-overlay">
+                  <div className="delete-confirm-dialog">
+                    <h3>Delete Recipe</h3>
+                    <p>Are you sure you want to delete "{recipe.title}"?</p>
+                    <p className="delete-warning">This action cannot be undone.</p>
+                    <div className="delete-confirm-actions">
+                      <button 
+                        className="delete-cancel-btn" 
+                        onClick={handleDeleteCancel}
+                        disabled={isDeleting}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        className="delete-confirm-btn" 
+                        onClick={() => handleDeleteRecipe(recipe._id)}
+                        disabled={isDeleting}
+                      >
+                        {isDeleting ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ))
         ) : (

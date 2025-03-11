@@ -15,6 +15,7 @@ import Recipes from "./pages/Recipes/Recipes";
 import SavedRecipes from "./pages/Saved/Saved";
 import ProtectedRoute from "./Component/ProtectedRoute";
 import RecipeDetail from "./pages/RecipeDetail/RecipeDetail";
+import EditRecipe from "./pages/AddRecipe/EditRecipe";
 import { initAuth } from "./redux/authSlice";
 
 function App() {
@@ -53,7 +54,8 @@ function App() {
             </ProtectedRoute>
           } />
                  
-          <Route path="/recipe/:id" element={<RecipeDetail />} />   
+          <Route path="/recipe/:id" element={<RecipeDetail />} />  
+          <Route path="/editrecipe/:id" element={<ProtectedRoute><EditRecipe /></ProtectedRoute>} /> 
           <Route path="/searchResult" element={<SearchResults />} />
           <Route path="/saved" element={<SavedRecipes />} />
 
