@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchRecipeById } from "../../redux/recipeSlice";
+import { SendHorizonal, Reply, SquareX } from "lucide-react";
+import { 
+  fetchRecipeById, 
+  toggleLikeRecipe, 
+  toggleFavorite 
+} from "../../redux/recipeSlice";
 import { 
   fetchCommentsByRecipe, 
   createComment, 
@@ -13,13 +18,15 @@ import {
   clearActiveComment
 } from "../../redux/commentSlice";
 import "./RecipeDetail.css";
+import TabButton from "../../Component/TabButton";
 
 function RecipeDetail() {
   const { id } = useParams();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { currentRecipe, isFetching, relatedRecipes } = useSelector(state => state.recipes);
   const { comments, isLoading, commentCount, activeComment } = useSelector(state => state.comments);
-  const { user } = useSelector(state => state.auths);
+  const { user, isAuthenticated } = useSelector(state => state.auths);
   const [activeTab, setActiveTab] = useState("ingredients");
   const [commentContent, setCommentContent] = useState("");
   const [editContent, setEditContent] = useState("");
@@ -30,6 +37,26 @@ function RecipeDetail() {
       dispatch(fetchCommentsByRecipe(id));
     }
   }, [dispatch, id]);
+
+  // Recipe like handler
+  const handleLikeRecipe = () => {
+    if (user) {
+      dispatch(toggleLikeRecipe(id));
+    } else {
+      // Redirect to login or show login prompt
+      alert("Vui lòng đăng nhập để thích công thức này");
+    }
+  };
+
+  // Recipe favorite handler
+  const handleFavoriteRecipe = () => {
+    if (user) {
+      dispatch(toggleFavorite(id));
+    } else {
+      // Redirect to login or show login prompt
+      alert("Vui lòng đăng nhập để lưu công thức này vào danh sách yêu thích");
+    }
+  };
 
   const handleCommentSubmit = (e) => {
     e.preventDefault();
@@ -79,7 +106,11 @@ function RecipeDetail() {
   };
 
   const handleLikeComment = (commentId) => {
-    dispatch(toggleLike(commentId));
+    if (user) {
+      dispatch(toggleLike(commentId));
+    } else {
+      alert("Vui lòng đăng nhập để thích bình luận");
+    }
   };
 
   const formatDate = (dateString) => {
@@ -107,8 +138,8 @@ function RecipeDetail() {
 
       <div className="recipe-detail-content">
         <div className="recipe-sidebar">
-          <div className="sidebar-title">Ingredients (sticky)</div>
           <div className="ingredients-list">
+          <div className="sidebar-title">Ingredients</div>
             {currentRecipe.ingredients && currentRecipe.ingredients.map((ingredient, index) => (
               <div key={index} className="ingredient-item">
                 • {ingredient}
@@ -128,7 +159,7 @@ function RecipeDetail() {
 
           {currentRecipe.sections && currentRecipe.sections.map((section, index) => (
             <div key={index} className="recipe-section">
-              <h2 className="section-title">Bước {index + 1}: {section.title}</h2>
+              <h2 className="section-title">{section.title}</h2>
               <p className="section-content">{section.content}</p>
               {section.imageUrl && (
                 <img 
@@ -142,12 +173,27 @@ function RecipeDetail() {
 
           <div className="recipe-interaction">
             <div className="recipe-likes">
-              <button className="like-btn">❤️</button>
-              <span>{currentRecipe.likes || 0}</span>
+              <button 
+                className={`like-btn ${currentRecipe.isLiked ? 'liked' : ''}`}
+                onClick={handleLikeRecipe}
+              >
+                {currentRecipe.isLiked ? '❤️' : '🤍'}
+              </button>
+              <span>{currentRecipe.likes?.length || 0}</span>
             </div>
+           
             <div className="recipe-views">
               <i className="view-icon">👁️</i>
               <span>{currentRecipe.views || 0}</span>
+            </div>
+
+            <div className="recipe-favorites">
+              <button 
+                className={`favorite-btn ${currentRecipe.isFavorited ? 'favorited' : ''}`}
+                onClick={handleFavoriteRecipe}
+              >
+                {currentRecipe.isFavorited ? '⭐' : '☆'}
+              </button>
             </div>
           </div>
 
@@ -158,7 +204,7 @@ function RecipeDetail() {
             {user ? (
               <form onSubmit={handleCommentSubmit} className="comment-input-area">
                 <div className="comment-avatar">
-                  <img src={user.avatar || "/default-avatar.png"} alt="User avatar" />
+                  <img src={user.Ava || "/default-avatar.png"} alt="User avatar" />
                 </div>
                 <input 
                   type="text" 
@@ -167,7 +213,7 @@ function RecipeDetail() {
                   value={commentContent}
                   onChange={(e) => setCommentContent(e.target.value)}
                 />
-                <button type="submit" className="comment-submit-btn">Gửi</button>
+                <button type="submit" className="comment-submit-btn" style={{border: 0}} ><SendHorizonal/></button>
               </form>
             ) : (
               <div className="login-to-comment">
@@ -179,7 +225,7 @@ function RecipeDetail() {
             {comments.map(comment => (
               <div key={comment._id} className="comment-item">
                 <div className="comment-avatar">
-                  <img src={comment.user?.avatar || "/default-avatar.png"} alt="User avatar" />
+                  <img src={comment.user?.Ava || "/default-avatar.png"} />
                 </div>
                 <div className="comment-content">
                   <div className="comment-header">
@@ -196,24 +242,29 @@ function RecipeDetail() {
                       />
                       <div className="edit-comment-actions">
                         <button onClick={() => handleUpdateComment(comment._id)}>Lưu</button>
-                        <button onClick={() => dispatch(clearActiveComment())}>Hủy</button>
+                        <button onClick={() => dispatch(clearActiveComment())}><SquareX/></button>
                       </div>
                     </div>
                   ) : (
                     <p className="comment-text">{comment.content}</p>
                   )}
                   
-                  <div className="comment-actions">
+                  {/* <div className="comment-actions">
                     <button 
                       className={`like-btn ${comment.likes?.includes(user?._id) ? 'liked' : ''}`}
                       onClick={() => handleLikeComment(comment._id)}
                     >
-                      ❤️ {comment.likes?.length || 0}
+                      {comment.likes?.includes(user?._id) ? '❤️' : '🤍'} {comment.likes?.length || 0}
                     </button>
                     
                     {user && (
                       <>
-                        <button onClick={() => handleReply(comment._id)}>Trả lời</button>
+                        <button 
+                          onClick={() => handleReply(comment._id)} 
+                          style={{border: 0, paddingLeft: 10, backgroundColor: "transparent", display: 'flex',alignItems: 'center'}}
+                          >
+                            <Reply size={16}/>
+                        </button>
                         {comment.user?._id === user._id && (
                           <>
                             <button onClick={() => handleEditComment(comment._id)}>Sửa</button>
@@ -222,7 +273,7 @@ function RecipeDetail() {
                         )}
                       </>
                     )}
-                  </div>
+                  </div> */}
                   
                   {/* Reply form */}
                   {activeComment?.id === comment._id && activeComment?.type === 'replying' && (
@@ -234,7 +285,7 @@ function RecipeDetail() {
                         className="reply-input"
                       />
                       <div className="reply-actions">
-                        <button onClick={() => handleSubmitReply(comment._id)}>Gửi</button>
+                        <button onClick={() => handleSubmitReply(comment._id)}><Reply/></button>
                         <button onClick={() => dispatch(clearActiveComment())}>Hủy</button>
                       </div>
                     </div>
@@ -246,7 +297,7 @@ function RecipeDetail() {
                       {comment.replies.map(reply => (
                         <div key={reply._id} className="reply-item">
                           <div className="reply-avatar">
-                            <img src={reply.user?.avatar || "/default-avatar.png"} alt="User avatar" />
+                            <img src={reply.user?.Ava || "/default-avatar.png"} alt="User avatar" />
                           </div>
                           <div className="reply-content">
                             <div className="reply-header">
@@ -283,6 +334,7 @@ function RecipeDetail() {
               <div className="more-recipe-content">
                 <div className="more-recipe-image">
                   <img src={recipe.imageUrl} alt={recipe.title} />
+                  {/* Nút yêu thích trên các công thức liên quan */}
                 </div>
                 <div className="more-recipe-info">
                   <h4 className="more-recipe-title">
@@ -295,7 +347,10 @@ function RecipeDetail() {
                     </div>
                     <div className="recipe-metrics">
                       <span className="recipe-likes">
-                        <i className="like-icon">❤️</i> {recipe.likes || 0}
+                        <i className="like-icon">❤️</i> {recipe.likes?.length || 0}
+                      </span>
+                      <span className="recipe-favorites">
+                        <i className="favorite-icon">⭐</i> {recipe.favorites?.length || 0}
                       </span>
                       <span className="recipe-views">
                         <i className="view-icon">👁️</i> {recipe.views || 0}

@@ -15,8 +15,8 @@ exports.getCommentsByRecipe = async (req, res) => {
     }
 
     const comments = await Comment.find({ recipe: recipeId })
-      .populate('user', 'username name avatar')
-      .populate('replies.user', 'username name avatar')
+      .populate('user', 'username name avatar Ava')
+      .populate('replies.user', 'username name avatar Ava')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -72,7 +72,7 @@ exports.createComment = async (req, res) => {
 
     // Populate thông tin user
     const populatedComment = await Comment.findById(newComment._id)
-      .populate('user', 'username name avatar');
+      .populate('user', 'username name avatar Ava');
 
     res.status(201).json({
       success: true,
@@ -230,8 +230,8 @@ exports.addReply = async (req, res) => {
 
     // Populate thông tin user của reply mới thêm vào
     const updatedComment = await Comment.findById(commentId)
-      .populate('user', 'username name avatar')
-      .populate('replies.user', 'username name avatar');
+      .populate('user', 'username name avatar Ava')
+      .populate('replies.user', 'username name avatar Ava');
 
     res.status(201).json({
       success: true,

@@ -157,9 +157,21 @@ exports.getRecipeById = async (req, res) => {
       await recipe.save();
     }
 
+    // Kiểm tra xem người dùng đã like recipe này chưa
+    let isLiked = false;
+    if (req.user) {
+      isLiked = recipe.likes && recipe.likes.some(
+        id => id.toString() === req.user._id.toString()
+      );
+    }
+
+    // Chuyển recipe thành đối tượng thông thường để thêm thuộc tính không thuộc schema
+    const recipeObj = recipe.toObject();
+    recipeObj.isLiked = isLiked;
+
     res.status(200).json({
       success: true,
-      data: recipe
+      data: recipeObj
     });
   } catch (error) {
     res.status(500).json({
@@ -464,6 +476,56 @@ exports.getFavoriteRecipes = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+// Thêm chức năng like recipe
+exports.toggleLike = async (req, res) => {
+  try {
+    const recipeId = req.params.id;
+    const userId = req.user._id;
+
+    const recipe = await Recipe.findById(recipeId);
+    
+    if (!recipe) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Recipe not found' 
+      });
+    }
+
+    // Initialize likes array if it doesn't exist
+    if (!recipe.likes) {
+      recipe.likes = [];
+    }
+
+    // Check if user already liked the recipe
+    const likeIndex = recipe.likes.findIndex(
+      id => id.toString() === userId.toString()
+    );
+    
+    if (likeIndex === -1) {
+      // User hasn't liked yet, add like
+      recipe.likes.push(userId);
+    } else {
+      // User already liked, remove like
+      recipe.likes.splice(likeIndex, 1);
+    }
+
+    await recipe.save();
+    
+    return res.status(200).json({ 
+      success: true, 
+      likes: recipe.likes.length,
+      isLiked: likeIndex === -1 // true if like was added, false if removed
+    });
+  } catch (error) {
+    console.error("Error toggling recipe like:", error);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Server error",
       error: error.message
     });
   }

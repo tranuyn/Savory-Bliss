@@ -33,6 +33,8 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    // Thêm trường savedRecipes
+    savedRecipes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Recipe' }]
   },
   { timestamps: true }
 );
