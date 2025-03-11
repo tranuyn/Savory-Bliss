@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { 
   fetchRecipeById, 
@@ -21,9 +21,10 @@ import "./RecipeDetail.css";
 function RecipeDetail() {
   const { id } = useParams();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { currentRecipe, isFetching, relatedRecipes } = useSelector(state => state.recipes);
   const { comments, isLoading, commentCount, activeComment } = useSelector(state => state.comments);
-  const { user } = useSelector(state => state.auths);
+  const { user, isAuthenticated } = useSelector(state => state.auths);
   const [activeTab, setActiveTab] = useState("ingredients");
   const [commentContent, setCommentContent] = useState("");
   const [editContent, setEditContent] = useState("");
@@ -103,7 +104,11 @@ function RecipeDetail() {
   };
 
   const handleLikeComment = (commentId) => {
-    dispatch(toggleLike(commentId));
+    if (user) {
+      dispatch(toggleLike(commentId));
+    } else {
+      alert("Vui lòng đăng nhập để thích bình luận");
+    }
   };
 
   const formatDate = (dateString) => {
@@ -170,7 +175,7 @@ function RecipeDetail() {
                 className={`like-btn ${currentRecipe.isLiked ? 'liked' : ''}`}
                 onClick={handleLikeRecipe}
               >
-                ❤️
+                {currentRecipe.isLiked ? '❤️' : '🤍'}
               </button>
               <span>{currentRecipe.likes?.length || 0}</span>
             </div>
@@ -179,7 +184,7 @@ function RecipeDetail() {
                 className={`favorite-btn ${currentRecipe.isFavorited ? 'favorited' : ''}`}
                 onClick={handleFavoriteRecipe}
               >
-                ⭐
+                {currentRecipe.isFavorited ? '⭐' : '☆'}
               </button>
               <span>{currentRecipe.favoritesCount || 0}</span>
             </div>
@@ -246,7 +251,7 @@ function RecipeDetail() {
                       className={`like-btn ${comment.likes?.includes(user?._id) ? 'liked' : ''}`}
                       onClick={() => handleLikeComment(comment._id)}
                     >
-                      ❤️ {comment.likes?.length || 0}
+                      {comment.likes?.includes(user?._id) ? '❤️' : '🤍'} {comment.likes?.length || 0}
                     </button>
                     
                     {user && (
@@ -321,6 +326,21 @@ function RecipeDetail() {
               <div className="more-recipe-content">
                 <div className="more-recipe-image">
                   <img src={recipe.imageUrl} alt={recipe.title} />
+                  {/* Nút yêu thích trên các công thức liên quan */}
+                  <button 
+                    className={`favorite-btn-card ${recipe.isFavorited ? 'favorited' : ''}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (user) {
+                        dispatch(toggleFavorite(recipe._id));
+                      } else {
+                        alert("Vui lòng đăng nhập để lưu công thức vào danh sách yêu thích");
+                      }
+                    }}
+                  >
+                    {recipe.isFavorited ? '⭐' : '☆'}
+                  </button>
                 </div>
                 <div className="more-recipe-info">
                   <h4 className="more-recipe-title">

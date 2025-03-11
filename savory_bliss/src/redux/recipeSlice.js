@@ -100,7 +100,7 @@ export const searchRecipes = createAsyncThunk(
   async ({ searchQuery, tags, page = 1, limit = 10 }, { rejectWithValue }) => {
     try {
       console.log('Searching with params:', { searchQuery, tags, page, limit });
-
+      
       const queryParams = new URLSearchParams();
 
       const trimmedQuery = searchQuery?.trim();
@@ -362,129 +362,10 @@ export const deleteRecipe = createAsyncThunk(
   }
 );
 
-// Thunk để lưu/bỏ lưu công thức
-export const toggleSaveRecipe = createAsyncThunk(
-  'recipes/toggleSaveRecipe',
-  async (recipeId, { getState, rejectWithValue }) => {
-    try {
-      const { auths } = getState();
-
-      if (!auths.token) {
-        throw new Error('Authentication required');
-      }
-
-      // Update the endpoint path to match your backend route
-      const response = await fetch(`${API_URL}/user/${recipeId}/save`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${auths.token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const data = await response.json();
-      console.log('Save response:', data);
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Could not save recipe');
-      }
-
-      return {
-        recipeId,
-        isSaved: data.isSaved
-      };
-
-    } catch (error) {
-      console.error('Toggle save error:', error);
-      return rejectWithValue(error.message);
-    }
-  }
-);
-
-
-// Thunk để lấy danh sách công thức đã lưu
-export const fetchSavedRecipes = createAsyncThunk(
-  "recipes/fetchSaved",
-  async (_, { getState, rejectWithValue }) => {
-    try {
-      const { auths } = getState();
-
-      if (!auths?.token) {
-        return rejectWithValue("Authentication required");
-      }
-
-      const response = await fetch(`${API_URL}/saved-recipes`, {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${auths.token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        return rejectWithValue(errorData.message || "Could not fetch saved recipes");
-      }
-
-      const data = await response.json();
-      return data; // Giả sử API trả về danh sách recipes
-
-    } catch (error) {
-      console.error("Fetch saved recipes error:", error);
-      return rejectWithValue(error.message || "Unknown error occurred");
-    }
-  }
-);
-
-export const fetchSavedRecipesDetails = createAsyncThunk(
-  "recipes/fetchSavedDetails",
-  async (_, { getState, dispatch, rejectWithValue }) => {
-    try {
-      const { auths } = getState();
-
-      if (!auths?.token) {
-        return rejectWithValue("Authentication required");
-      }
-
-      // Đầu tiên lấy danh sách ID các công thức đã lưu
-      const savedResult = await dispatch(fetchSavedRecipes()).unwrap();
-      
-      if (!Array.isArray(savedResult) || savedResult.length === 0) {
-        return []; // Trả về mảng rỗng nếu không có công thức nào được lưu
-      }
-      
-      // Tạo mảng các promise để lấy thông tin chi tiết của từng công thức
-      const recipePromises = savedResult.map(id => 
-        fetch(`${API_URL}/${id}`, {
-          headers: {
-            "Authorization": `Bearer ${auths.token}`,
-            "Content-Type": "application/json",
-          }
-        })
-        .then(res => {
-          if (!res.ok) throw new Error(`Could not fetch recipe ${id}`);
-          return res.json();
-        })
-        .then(data => data.data)
-      );
-      
-      // Thực hiện tất cả các request song song
-      const recipes = await Promise.all(recipePromises);
-      return recipes;
-      
-    } catch (error) {
-      console.error("Fetch saved recipes details error:", error);
-      return rejectWithValue(error.message || "Failed to fetch recipe details");
-    }
-  }
-);
-
 const recipeSlice = createSlice({
   name: 'recipes',
   initialState: {
     recipes: [],
-    savedRecipes: [],
-    savedRecipesDetails: [],
     currentRecipe: null,
     favoriteRecipes: [],
     isFetching: false,
@@ -701,59 +582,7 @@ const recipeSlice = createSlice({
         state.isDeleting = false;
         state.success = false;
         state.error = action.payload;
-      })
-
-      // Xử lý toggleSaveRecipe
-      .addCase(toggleSaveRecipe.pending, (state) => {
-        state.isFetching = true;
-        state.error = null;
-      })
-      .addCase(toggleSaveRecipe.fulfilled, (state, action) => {
-        state.isFetching = false;
-        if (action.payload.isSaved) {
-          state.savedRecipes.push(action.payload.recipeId);
-        } else {
-          state.savedRecipes = state.savedRecipes.filter(
-            id => id !== action.payload.recipeId
-          );
-        }
-      })
-      .addCase(toggleSaveRecipe.rejected, (state, action) => {
-        state.isFetching = false;
-        state.error = action.payload;
-      })
-
-      // Xử lý fetchSavedRecipes
-      .addCase(fetchSavedRecipes.pending, (state) => {
-        state.isFetching = true;
-        state.error = null;
-      })
-      .addCase(fetchSavedRecipes.fulfilled, (state, action) => {
-        state.isFetching = false;
-        state.savedRecipes = Array.isArray(action.payload) ? action.payload : [];
-        state.error = null;
-      })
-      .addCase(fetchSavedRecipes.rejected, (state, action) => {
-        state.isFetching = false;
-        state.savedRecipes = [];
-        state.error = action.payload;
-      })
-
-      // Xử lý fetchSavedRecipesDetails
-     .addCase(fetchSavedRecipesDetails.pending, (state) => {
-      state.isFetching = true;
-      state.error = null;
-    })
-    .addCase(fetchSavedRecipesDetails.fulfilled, (state, action) => {
-      state.isFetching = false;
-      state.savedRecipesDetails = action.payload; // Lưu thông tin chi tiết vào state
-      state.error = null;
-    })
-    .addCase(fetchSavedRecipesDetails.rejected, (state, action) => {
-      state.isFetching = false;
-      state.savedRecipesDetails = [];
-      state.error = action.payload;
-    });
+      });
   }
 });
 
