@@ -1,31 +1,47 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Link } from "react-router-dom";
-import { fetchSavedRecipesDetails } from "../../redux/recipeSlice";
+import { Link, useNavigate } from "react-router-dom";
+import { fetchFavoriteRecipes, toggleFavorite } from "../../redux/recipeSlice";
 import FilterAndSort from "../../Component/FilterAndSort";
 import "./Saved.css";
 
 function SavedRecipes() {
     const dispatch = useDispatch();
-    const { savedRecipesDetails = [], isFetching, error } = useSelector(state => state.recipes);
+    const navigate = useNavigate();
+    const { favoriteRecipes = [], isFetching, error } = useSelector(state => state.recipes);
+    const { user } = useSelector(state => state.auths);
     const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
-        dispatch(fetchSavedRecipesDetails());
-    }, [dispatch]);
+        // Kiểm tra nếu đã đăng nhập mới fetch danh sách yêu thích
+        if (user) {
+            dispatch(fetchFavoriteRecipes());
+        } else {
+            // Nếu chưa đăng nhập, chuyển hướng đến trang đăng nhập
+            navigate('/login', { state: { from: '/saved' } });
+        }
+    }, [dispatch, user, navigate]);
 
     const handleSearchChange = (e) => {
         setSearchQuery(e.target.value);
     };
 
-    // Make sure savedRecipesDetails is an array before filtering
-    const filteredRecipes = Array.isArray(savedRecipesDetails) 
-        ? savedRecipesDetails.filter(recipe =>
+    const handleRemoveFavorite = (e, recipeId) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (user) {
+            dispatch(toggleFavorite(recipeId));
+        } else {
+            alert("Vui lòng đăng nhập để thực hiện thao tác này");
+        }
+    };
+
+    // Make sure favoriteRecipes is an array before filtering
+    const filteredRecipes = Array.isArray(favoriteRecipes) 
+        ? favoriteRecipes.filter(recipe =>
             recipe?.title?.toLowerCase().includes(searchQuery.toLowerCase())
           )
         : [];
-
-    console.log('Saved Recipes:', savedRecipesDetails); // For debugging
 
     return (
         <div className="home-container">
@@ -57,6 +73,13 @@ function SavedRecipes() {
                                     <Link to={`/recipe/${recipe._id}`} className="recipe-link">
                                         <div className="recipe-image">
                                             <img src={recipe.imageUrl} alt={recipe.title} />
+                                            {/* Nút xóa khỏi danh sách yêu thích */}
+                                            <button 
+                                                className="remove-favorite-btn"
+                                                onClick={(e) => handleRemoveFavorite(e, recipe._id)}
+                                            >
+                                                ✖
+                                            </button>
                                         </div>
                                         <div className="recipe-info">
                                             <h3 className="recipe-title">{recipe.title}</h3>
@@ -73,6 +96,17 @@ function SavedRecipes() {
                                                     className="author-avatar"
                                                 />
                                                 <span className="author-name">{recipe.author?.username || "Unknown"}</span>
+                                            </div>
+                                            <div className="recipe-stats">
+                                                <span className="recipe-likes">
+                                                    <i className="like-icon">❤️</i> {recipe.likes?.length || 0}
+                                                </span>
+                                                <span className="recipe-favorites">
+                                                    <i className="favorite-icon">⭐</i> {recipe.favoritesCount || 0}
+                                                </span>
+                                                <span className="recipe-views">
+                                                    <i className="view-icon">👁️</i> {recipe.views || 0}
+                                                </span>
                                             </div>
                                         </div>
                                     </Link>
