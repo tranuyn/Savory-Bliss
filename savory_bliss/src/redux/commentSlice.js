@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-const API_URL = 'http://localhost:5000/api/comments';
+const API_URL = process.env.REACT_APP_SERVER_URL 
+? `${process.env.REACT_APP_SERVER_URL}/api/comments` 
+: `http://localhost:${process.env.REACT_APP_SERVER_PORT || 5000}/api/comments`;
 
 // Async thunks
 export const fetchCommentsByRecipe = createAsyncThunk(

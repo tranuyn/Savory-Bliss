@@ -6,12 +6,12 @@ services:
       context: ./savory_bliss
       args:
         - SERVER_PORT=${SERVER_PORT}
-        - SERVER_URL=${SERVER_URL}
+        # - SERVER_URL=${SERVER_URL}
     ports:
       - "3000:3000"
     environment:
       - SERVER_PORT=${SERVER_PORT}
-      - SERVER_URL=${SERVER_URL}
+      # - SERVER_URL=${SERVER_URL}
     depends_on:
       - server
 
