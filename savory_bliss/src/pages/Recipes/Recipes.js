@@ -41,18 +41,17 @@ function Recipes() {
       <div className="user-profile-section">
         <div className="profile-content">
           <div className="profile-ava">
-            <img src={user?.avatar || "/default-avatar.png"} alt="User avatar" />
+            <img src={user?.Ava || "/default-avatar.png"} alt="User avatar" />
           </div>
           <div className="profile-info">
             <h2 className="profile-name">{user?.name || "Anne the Hungry"}</h2>
-            <p className="profile-title">{user?.title || "@hungry_panda"}</p>
-            <p className="profile-description">{user?.description || "Day là profile.Day là profile.Day là profile.Day là profile.Day là profile.Day là profile.Day là profile."}</p>
-            <a href={user?.website || "https://hungryanne.com"} className="profile-website" target="_blank" rel="noopener noreferrer">
+            <p className="profile-title">{user?.email || "@hungry_panda"}</p>
+            <p className="profile-description">{user?.bio || "Day là profile.Day là profile.Day là profile.Day là profile.Day là profile.Day là profile.Day là profile."}</p>
+            {/* <a href={user?.website || "https://hungryanne.com"} className="profile-website" target="_blank" rel="noopener noreferrer">
               {user?.website || "hungryanne.com"}
-            </a>
+            </a> */}
             <div className="profile-stats">
-              <span className="stats-item">{user?.followers || 255} Followers</span>
-              <span className="stats-item">{user?.following || 3000} Following</span>
+              <span className="stats-item">{user?.followers || 255} Recipes</span>
               <span className="stats-item">{user?.likes || 1.5}k Likes</span>
             </div>
           </div>

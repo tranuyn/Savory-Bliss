@@ -21,8 +21,8 @@
   }
   
   .profile-ava {
-    width: 100px;
-    height: 100px;
+    width: 137px;
+    height: 137px;
     margin-right: 20px;
   }
   
@@ -42,19 +42,23 @@
     font-size: 18px;
     color: #ff7b00;
     margin: 0 0 5px 0;
+    font-weight: 800;
+    text-align: left;
   }
   
   .profile-title {
     font-size: 14px;
-    color: #666;
+    color: #888;
     margin: 0 0 10px 0;
+    text-align: left;
   }
   
   .profile-description {
     font-size: 14px;
-    color: #888;
+    color: black;
     margin: 0 0 10px 0;
     line-height: 1.4;
+    text-align: left;
   }
   
   .profile-website {
