@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchRecipeById } from "../../redux/recipeSlice";
+import { 
+  fetchRecipeById, 
+  toggleLikeRecipe, 
+  toggleFavorite 
+} from "../../redux/recipeSlice";
 import { 
   fetchCommentsByRecipe, 
   createComment, 
@@ -30,6 +34,26 @@ function RecipeDetail() {
       dispatch(fetchCommentsByRecipe(id));
     }
   }, [dispatch, id]);
+
+  // Recipe like handler
+  const handleLikeRecipe = () => {
+    if (user) {
+      dispatch(toggleLikeRecipe(id));
+    } else {
+      // Redirect to login or show login prompt
+      alert("Vui lòng đăng nhập để thích công thức này");
+    }
+  };
+
+  // Recipe favorite handler
+  const handleFavoriteRecipe = () => {
+    if (user) {
+      dispatch(toggleFavorite(id));
+    } else {
+      // Redirect to login or show login prompt
+      alert("Vui lòng đăng nhập để lưu công thức này vào danh sách yêu thích");
+    }
+  };
 
   const handleCommentSubmit = (e) => {
     e.preventDefault();
@@ -142,8 +166,22 @@ function RecipeDetail() {
 
           <div className="recipe-interaction">
             <div className="recipe-likes">
-              <button className="like-btn">❤️</button>
-              <span>{currentRecipe.likes || 0}</span>
+              <button 
+                className={`like-btn ${currentRecipe.isLiked ? 'liked' : ''}`}
+                onClick={handleLikeRecipe}
+              >
+                ❤️
+              </button>
+              <span>{currentRecipe.likes?.length || 0}</span>
+            </div>
+            <div className="recipe-favorites">
+              <button 
+                className={`favorite-btn ${currentRecipe.isFavorited ? 'favorited' : ''}`}
+                onClick={handleFavoriteRecipe}
+              >
+                ⭐
+              </button>
+              <span>{currentRecipe.favoritesCount || 0}</span>
             </div>
             <div className="recipe-views">
               <i className="view-icon">👁️</i>
@@ -295,7 +333,10 @@ function RecipeDetail() {
                     </div>
                     <div className="recipe-metrics">
                       <span className="recipe-likes">
-                        <i className="like-icon">❤️</i> {recipe.likes || 0}
+                        <i className="like-icon">❤️</i> {recipe.likes?.length || 0}
+                      </span>
+                      <span className="recipe-favorites">
+                        <i className="favorite-icon">⭐</i> {recipe.favoritesCount || 0}
                       </span>
                       <span className="recipe-views">
                         <i className="view-icon">👁️</i> {recipe.views || 0}

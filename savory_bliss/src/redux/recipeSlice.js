@@ -2,6 +2,98 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 const API_URL = 'http://localhost:5000/api/recipes';
 
+// New thunk action for toggle like functionality
+export const toggleLikeRecipe = createAsyncThunk(
+  'recipes/toggleLike',
+  async (recipeId, { rejectWithValue, getState }) => {
+    try {
+      const { auths } = getState();
+      const token = auths.token;
+
+      const response = await fetch(`${API_URL}/${recipeId}/like`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Could not toggle like status');
+      }
+
+      const data = await response.json();
+      return {
+        recipeId,
+        likes: data.likes,
+        isLiked: data.isLiked
+      };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Thunk để lấy công thức yêu thích của người dùng
+export const fetchFavoriteRecipes = createAsyncThunk(
+  'recipes/fetchFavoriteRecipes',
+  async (_, { rejectWithValue, getState }) => {
+    try {
+      const { auths } = getState();
+      const token = auths.token;
+
+      const response = await fetch(`${API_URL}/favorites`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Không thể lấy danh sách công thức yêu thích');
+      }
+
+      const data = await response.json();
+      return data.data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Thunk để chuyển đổi trạng thái yêu thích
+export const toggleFavorite = createAsyncThunk(
+  'recipes/toggleFavorite',
+  async (recipeId, { rejectWithValue, getState }) => {
+    try {
+      const { auths } = getState();
+      const token = auths.token;
+
+      const response = await fetch(`${API_URL}/${recipeId}/favorite`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Không thể thay đổi trạng thái yêu thích');
+      }
+
+      const data = await response.json();
+      return {
+        recipeId,
+        isFavorited: data.isFavorited,
+        favoritesCount: data.favoritesCount
+      };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 //search recipes
 export const searchRecipes = createAsyncThunk(
   'recipes/search',
@@ -15,7 +107,6 @@ export const searchRecipes = createAsyncThunk(
       if (trimmedQuery) {
         queryParams.append('query', trimmedQuery);
       }
-
 
       // Handle tags array properly
       if (Array.isArray(tags) && tags.length > 0) {
@@ -73,6 +164,7 @@ export const searchRecipes = createAsyncThunk(
     }
   }
 );
+
 // Thunk để lấy tất cả công thức
 export const fetchRecipes = createAsyncThunk(
   'recipes/fetchRecipes',
@@ -146,9 +238,13 @@ export const addRecipe = createAsyncThunk(
       // Thêm các trường dữ liệu vào FormData
       formData.append('title', recipeData.title);
       formData.append('description', recipeData.description);
-      formData.append('tags', JSON.stringify(recipeData.tags));
-      formData.append('ingredients', JSON.stringify(recipeData.ingredients));
-      formData.append('sections', JSON.stringify(recipeData.sections));
+      formData.append('tags', recipeData.tags.join(','));
+      formData.append('ingredients', recipeData.ingredients.join('\n'));
+      
+      // Convert sections to JSON and append
+      if (recipeData.sections && recipeData.sections.length > 0) {
+        formData.append('sections', JSON.stringify(recipeData.sections));
+      }
 
       // Thêm hình ảnh chính
       if (recipeData.image) {
@@ -196,9 +292,13 @@ export const updateRecipe = createAsyncThunk(
       // Thêm các trường dữ liệu vào FormData
       formData.append('title', recipeData.title);
       formData.append('description', recipeData.description);
-      formData.append('tags', JSON.stringify(recipeData.tags));
-      formData.append('ingredients', JSON.stringify(recipeData.ingredients));
-      formData.append('sections', JSON.stringify(recipeData.sections));
+      formData.append('tags', recipeData.tags.join(','));
+      formData.append('ingredients', recipeData.ingredients.join('\n'));
+      
+      // Convert sections to JSON and append
+      if (recipeData.sections && recipeData.sections.length > 0) {
+        formData.append('sections', JSON.stringify(recipeData.sections));
+      }
 
       // Thêm hình ảnh chính nếu có
       if (recipeData.image && recipeData.image instanceof File) {
@@ -210,7 +310,6 @@ export const updateRecipe = createAsyncThunk(
         recipeData.sectionImages.forEach((image, index) => {
           if (image instanceof File) {
             formData.append('sectionImages', image);
-            formData.append('sectionImageIndices', index);
           }
         });
       }
@@ -268,6 +367,7 @@ const recipeSlice = createSlice({
   initialState: {
     recipes: [],
     currentRecipe: null,
+    favoriteRecipes: [],
     isFetching: false,
     isAdding: false,
     isUpdating: false,
@@ -296,6 +396,73 @@ const recipeSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // Toggle like cases
+      .addCase(toggleLikeRecipe.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(toggleLikeRecipe.fulfilled, (state, action) => {
+        const { recipeId, likes, isLiked } = action.payload;
+        
+        // Update the current recipe if it matches
+        if (state.currentRecipe && state.currentRecipe._id === recipeId) {
+          state.currentRecipe.likes = likes;
+          state.currentRecipe.isLiked = isLiked;
+        }
+        
+        // Update the recipe in the recipes array if it exists
+        const recipeIndex = state.recipes.findIndex(r => r._id === recipeId);
+        if (recipeIndex !== -1) {
+          state.recipes[recipeIndex].likes = likes;
+          state.recipes[recipeIndex].isLiked = isLiked;
+        }
+        
+        state.error = null;
+      })
+      .addCase(toggleLikeRecipe.rejected, (state, action) => {
+        state.error = action.payload;
+      })
+      
+      // Toggle favorite cases
+      .addCase(toggleFavorite.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(toggleFavorite.fulfilled, (state, action) => {
+        const { recipeId, isFavorited, favoritesCount } = action.payload;
+        
+        // Update the current recipe if it matches
+        if (state.currentRecipe && state.currentRecipe._id === recipeId) {
+          state.currentRecipe.isFavorited = isFavorited;
+          state.currentRecipe.favoritesCount = favoritesCount;
+        }
+        
+        // Update the recipe in the recipes array if it exists
+        const recipeIndex = state.recipes.findIndex(r => r._id === recipeId);
+        if (recipeIndex !== -1) {
+          state.recipes[recipeIndex].isFavorited = isFavorited;
+          state.recipes[recipeIndex].favoritesCount = favoritesCount;
+        }
+        
+        state.error = null;
+      })
+      .addCase(toggleFavorite.rejected, (state, action) => {
+        state.error = action.payload;
+      })
+      
+      // Fetch favorite recipes cases
+      .addCase(fetchFavoriteRecipes.pending, (state) => {
+        state.isFetching = true;
+        state.error = null;
+      })
+      .addCase(fetchFavoriteRecipes.fulfilled, (state, action) => {
+        state.isFetching = false;
+        state.favoriteRecipes = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchFavoriteRecipes.rejected, (state, action) => {
+        state.isFetching = false;
+        state.error = action.payload;
+      })
+
       // Search recipes cases
       .addCase(searchRecipes.pending, (state) => {
         state.isFetching = true;
@@ -385,7 +552,7 @@ const recipeSlice = createSlice({
       })
       .addCase(updateRecipe.fulfilled, (state, action) => {
         state.isUpdating = false;
-        const index = state.recipes.findIndex(recipe => recipe.id === action.payload.id);
+        const index = state.recipes.findIndex(recipe => recipe._id === action.payload._id);
         if (index !== -1) {
           state.recipes[index] = action.payload;
         }
@@ -407,7 +574,7 @@ const recipeSlice = createSlice({
       })
       .addCase(deleteRecipe.fulfilled, (state, action) => {
         state.isDeleting = false;
-        state.recipes = state.recipes.filter(recipe => recipe.id !== action.payload);
+        state.recipes = state.recipes.filter(recipe => recipe._id !== action.payload);
         state.success = true;
         state.error = null;
       })
