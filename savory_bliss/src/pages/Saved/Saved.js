@@ -1,31 +1,31 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
-import { fetchRecipes } from "../../redux/recipeSlice";
+import { Link } from "react-router-dom";
+import { fetchSavedRecipesDetails } from "../../redux/recipeSlice";
 import FilterAndSort from "../../Component/FilterAndSort";
 import "./Saved.css";
 
 function SavedRecipes() {
     const dispatch = useDispatch();
-    const navigate = useNavigate();
-
-    // Lấy state từ Redux
-    const { recipes, isFetching } = useSelector(state => state.recipes);
-
+    const { savedRecipesDetails = [], isFetching, error } = useSelector(state => state.recipes);
     const [searchQuery, setSearchQuery] = useState("");
 
-    // Fetch all recipes when component mounts
     useEffect(() => {
-        dispatch(fetchRecipes());
+        dispatch(fetchSavedRecipesDetails());
     }, [dispatch]);
 
     const handleSearchChange = (e) => {
         setSearchQuery(e.target.value);
     };
 
-    const filteredRecipes = recipes && recipes.filter(recipe =>
-        recipe.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // Make sure savedRecipesDetails is an array before filtering
+    const filteredRecipes = Array.isArray(savedRecipesDetails) 
+        ? savedRecipesDetails.filter(recipe =>
+            recipe?.title?.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+        : [];
+
+    console.log('Saved Recipes:', savedRecipesDetails); // For debugging
 
     return (
         <div className="home-container">
@@ -34,7 +34,7 @@ function SavedRecipes() {
                 <div className="main-content">
                     {/* Search bar */}
                     <div className="main-header">
-                    <h2 className="page-title">Saved Recipes</h2>
+                        <h2 className="page-title">Saved Recipes</h2>
                         <div className="search-bar1">
                             <input
                                 type="text"
@@ -49,7 +49,9 @@ function SavedRecipes() {
                     <div className="recipes-grid">
                         {isFetching ? (
                             <div className="loading">Loading recipes...</div>
-                        ) : filteredRecipes && filteredRecipes.length > 0 ? (
+                        ) : error ? (
+                            <div className="error">Failed to load recipes: {error}</div>
+                        ) : filteredRecipes.length > 0 ? (
                             filteredRecipes.map(recipe => (
                                 <div key={recipe._id} className="recipe-card">
                                     <Link to={`/recipe/${recipe._id}`} className="recipe-link">
@@ -66,18 +68,18 @@ function SavedRecipes() {
                                             </div>
                                             <div className="recipe-author">
                                                 <img
-                                                    src={recipe.author.Ava}
-                                                    alt={recipe.author.username}
+                                                    src={recipe.author?.Ava || "/default-avatar.png"}
+                                                    alt={recipe.author?.username || "Unknown"}
                                                     className="author-avatar"
                                                 />
-                                                <span className="author-name">{recipe.author.username}</span>
+                                                <span className="author-name">{recipe.author?.username || "Unknown"}</span>
                                             </div>
                                         </div>
                                     </Link>
                                 </div>
                             ))
                         ) : (
-                            <div className="no-recipes">No recipes found.</div>
+                            <div className="no-recipes">No saved recipes found.</div>
                         )}
                     </div>
                 </div>
