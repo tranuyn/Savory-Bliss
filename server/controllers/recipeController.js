@@ -335,29 +335,41 @@ exports.getRecipesByUser = async (req, res) => {
 exports.searchRecipes = async (req, res) => {
   try {
     const { query, page = 1, limit = 10 } = req.query;
-    
+
     console.log('Backend received search params:', { query, page, limit });
 
-    // Build search query for title only
     let searchQuery = {};
-    
+
     if (query) {
-      const searchRegex = new RegExp(query.trim(), 'i');
-      searchQuery = {
-        title: searchRegex
-      };
+      const terms = query.trim().split(/\s+/); // Split by spaces
+      const tags = terms.filter(term => term.startsWith("#") && !term.includes(" "));
+      const titleTerms = terms.filter(term => !term.startsWith("#"));
+
+      if (tags.length > 0) {
+        searchQuery.tags = { 
+        $all: tags.map(tag => new RegExp(tag, "i")) 
+        };
+      }
+      console.log("All tags:", tags);
+
+      if (titleTerms.length > 0) {
+        // Partial match for title (case-insensitive)
+        const searchRegex = new RegExp(titleTerms.join(" "), "i");
+        searchQuery.title = searchRegex;
+      }
+
+      console.log("Constructed Search Query:", JSON.stringify(searchQuery));
     }
 
-    // Execute search query
     const recipes = await Recipe.find(searchQuery)
-      .populate('author', 'username name Ava')
+      .populate("author", "username name Ava")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(parseInt(limit));
 
     const total = await Recipe.countDocuments(searchQuery);
 
-    console.log('Search results:', { count: recipes.length, total });
+    console.log("Search results:", { count: recipes.length, total });
 
     res.status(200).json({
       success: true,
@@ -365,19 +377,20 @@ exports.searchRecipes = async (req, res) => {
       pagination: {
         total,
         page: parseInt(page),
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     });
-
   } catch (error) {
-    console.error('Search error:', error);
+    console.error("Search error:", error);
     res.status(500).json({
       success: false,
-      message: 'Server error',
-      error: error.message
+      message: "Server error",
+      error: error.message,
     });
   }
 };
+
+
 
 exports.getRecipesByTag = async (req, res) => {
   try {
