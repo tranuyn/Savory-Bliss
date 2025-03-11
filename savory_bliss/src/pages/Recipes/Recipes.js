@@ -29,7 +29,7 @@ function Recipes() {
   );
   
   const handleAddRecipe = () => {
-    navigate('/add-recipe');
+    navigate('/addrecipe');
   };
 
   const handleAccountSettings = () => {
@@ -40,7 +40,7 @@ function Recipes() {
     <div className="recipes-container">
       <div className="user-profile-section">
         <div className="profile-content">
-          <div className="profile-avatar">
+          <div className="profile-ava">
             <img src={user?.avatar || "/default-avatar.png"} alt="User avatar" />
           </div>
           <div className="profile-info">
@@ -88,7 +88,7 @@ function Recipes() {
         ) : filteredRecipes && filteredRecipes.length > 0 ? (
           filteredRecipes.map(recipe => (
             <div key={recipe.id} className="recipe-card">
-              <Link to={`/recipe/${recipe.id}`} className="recipe-link">
+              <Link to={`/recipe/${recipe._id}`} className="recipe-link">
                 <div className="recipe-image">
                   <img src={recipe.imageUrl} alt={recipe.title} />
                 </div>
