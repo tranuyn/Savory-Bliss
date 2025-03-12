@@ -21,8 +21,8 @@
   }
   
   .profile-ava {
-    width: 100px;
-    height: 100px;
+    width: 137px;
+    height: 137px;
     margin-right: 20px;
   }
   
@@ -42,19 +42,23 @@
     font-size: 18px;
     color: #ff7b00;
     margin: 0 0 5px 0;
+    font-weight: 800;
+    text-align: left;
   }
   
   .profile-title {
     font-size: 14px;
-    color: #666;
+    color: #888;
     margin: 0 0 10px 0;
+    text-align: left;
   }
   
   .profile-description {
     font-size: 14px;
-    color: #888;
+    color: black;
     margin: 0 0 10px 0;
     line-height: 1.4;
+    text-align: left;
   }
   
   .profile-website {
@@ -234,6 +238,131 @@
   
   .view-icon {
     font-size: 16px;
+  }
+
+  .recipe-management {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+  }
+  
+  .recipe-edit-btn,
+  .recipe-delete-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+  }
+  
+  .recipe-edit-btn {
+    background-color: #f0f0f0;
+    color: #555;
+  }
+  
+  .recipe-delete-btn {
+    background-color: #ffeeee;
+    color: #ff5555;
+  }
+  
+  .recipe-edit-btn:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .recipe-delete-btn:hover {
+    background-color: #ffdddd;
+  }
+  
+  /* Delete confirmation dialog */
+  .delete-confirm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  .delete-confirm-dialog {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .delete-confirm-dialog h3 {
+    margin-top: 0;
+    color: #333;
+  }
+  
+  .delete-warning {
+    color: #ff5555;
+    font-weight: 500;
+  }
+  
+  .delete-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  
+  .delete-cancel-btn,
+  .delete-confirm-btn {
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+  }
+  
+  .delete-cancel-btn {
+    background-color: #f0f0f0;
+    color: #555;
+  }
+  
+  .delete-confirm-btn {
+    background-color: #ff5555;
+    color: white;
+  }
+  
+  .delete-cancel-btn:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .delete-confirm-btn:hover {
+    background-color: #ff3333;
+  }
+  
+  .delete-cancel-btn:disabled,
+  .delete-confirm-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  
+  /* Edit recipe page */
+  .edit-recipe-title {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+  }
+  
+  .loading-recipe {
+    text-align: center;
+    padding: 40px;
+    font-size: 18px;
+    color: #666;
   }
   
   /* Responsive design */

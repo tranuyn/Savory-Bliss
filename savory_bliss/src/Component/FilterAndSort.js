@@ -1,12 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './FilterAndSort.css';
 
-const FilterAndSort = () => {
+const FilterAndSort = ({ onFilterChange }) => {
   const [dateFilter, setDateFilter] = useState({ from: '', to: '' });
   const [likesSort, setLikesSort] = useState('descending');
-  const [commentsSort, setCommentsSort] = useState('descending');
+  const [viewsSort, setViewsSort] = useState('descending');
+  const [activeSort, setActiveSort] = useState('likes'); // Track which sort is active
   
-  // Handlers for changes
+  // Sử dụng useCallback để tránh tạo lại hàm mỗi khi component re-render
+  const notifyFilterChange = useCallback(() => {
+    if (onFilterChange) {
+      onFilterChange({
+        dateFilter,
+        likesSort,
+        viewsSort,
+        activeSort
+      });
+    }
+  }, [dateFilter, likesSort, viewsSort, activeSort, onFilterChange]);
+  
+  // Sử dụng useEffect với debounce để tránh gọi callback quá nhiều lần
+  useEffect(() => {
+    const timeoutId = setTimeout(notifyFilterChange, 300);
+    return () => clearTimeout(timeoutId);
+  }, [notifyFilterChange]);
+  
+  // Event handler functions
   const handleFromDateChange = (e) => {
     setDateFilter({ ...dateFilter, from: e.target.value });
   };
@@ -17,10 +36,12 @@ const FilterAndSort = () => {
   
   const handleLikesSortChange = (e) => {
     setLikesSort(e.target.value);
+    setActiveSort('likes'); // Set likes as the active sort
   };
   
-  const handleCommentsSortChange = (e) => {
-    setCommentsSort(e.target.value);
+  const handleViewsSortChange = (e) => {
+    setViewsSort(e.target.value);
+    setActiveSort('views'); // Set views as the active sort
   };
   
   return (
@@ -64,7 +85,7 @@ const FilterAndSort = () => {
       
       {/* Likes Sort Section */}
       <div className="sort-section">
-        <h3 className="filter-section-title">By likes</h3>
+        <h3 className={`filter-section-title ${activeSort === 'likes' ? 'active-sort' : ''}`}>By likes</h3>
         <div className="select-container">
           <select 
             className="sort-select"
@@ -77,14 +98,14 @@ const FilterAndSort = () => {
         </div>
       </div>
       
-      {/* Comments Sort Section */}
+      {/* Views Sort Section */}
       <div className="sort-section">
-        <h3 className="filter-section-title">By comments</h3>
+        <h3 className={`filter-section-title ${activeSort === 'views' ? 'active-sort' : ''}`}>By views</h3>
         <div className="select-container">
           <select 
             className="sort-select"
-            onChange={handleCommentsSortChange}
-            value={commentsSort}
+            onChange={handleViewsSortChange}
+            value={viewsSort}
           >
             <option value="descending">Descending</option>
             <option value="ascending">Ascending</option>
@@ -95,4 +116,5 @@ const FilterAndSort = () => {
   );
 };
 
-export default FilterAndSort;
+// Sử dụng React.memo để tránh re-render không cần thiết
+export default React.memo(FilterAndSort);
